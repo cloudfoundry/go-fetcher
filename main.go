@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+  "github.com/cloudfoundry/go-fetcher/handlers"
 )
 
 var domain = flag.String(
@@ -31,13 +32,9 @@ func main() {
 	flag.Parse()
 	orgList := strings.Split(*orgFlag, ",")
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		repoName := strings.Split(r.URL.Path, "/")[1]
-		fmt.Fprintf(w, "<meta name=\"go-import\" content=\"%s git %s\">",
-			*domain + "/" + repoName,
-			orgList[0] + repoName,
-		)
-	})
+
+	handler := handlers.NewHandler(domain, orgList)
+	http.HandleFunc("/", handler.GetMeta)
 
 	fmt.Println("go-fetch-server.ready")
 	log.Fatal(http.ListenAndServe(":"+port, nil))
