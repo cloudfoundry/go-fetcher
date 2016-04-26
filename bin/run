@@ -1,5 +1,5 @@
 #!/bin/bash
 
-go-fetcher \
+../go-fetcher \
   -orgList="https://github.com/cloudfoundry/,https://github.com/cloudfoundry-incubator" \
-  -domain="code-acceptance.toolsmiths.cf-app.com"
+  -domain="$DOMAIN"

@@ -1,0 +1,6 @@
+#!/bin/bash
+
+export PORT=80
+./go-fetcher \
+  -orgList="https://github.com/cloudfoundry/,https://github.com/cloudfoundry-incubator" \
+  -domain="127.0.0.1"

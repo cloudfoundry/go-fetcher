@@ -34,8 +34,8 @@ func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		repoName := strings.Split(r.URL.Path, "/")[1]
 		fmt.Fprintf(w, "<meta name=\"go-import\" content=\"%s git %s\">",
-			*domain+"/"+repoName,
-			orgList[0]+repoName,
+			*domain + "/" + repoName,
+			orgList[0] + repoName,
 		)
 	})
 
