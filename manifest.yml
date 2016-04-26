@@ -1,7 +1,6 @@
 ---
 application:
   - name: code-acceptance
-    command: ./bin/run
 env:
   GOPACKAGENAME: github.com/cloudfoundry/go-fetcher/cmd/go-fetcher
   GOVERSION: go1.6

@@ -1,5 +1,4 @@
 #!/bin/bash
-
-../go-fetcher \
+cd .. && go-fetcher \
   -orgList="https://github.com/cloudfoundry/,https://github.com/cloudfoundry-incubator" \
   -domain="$DOMAIN"
