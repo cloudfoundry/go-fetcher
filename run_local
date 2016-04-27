@@ -1,4 +1,3 @@
 #!/bin/bash
 
-export PORT=80
-./go-fetcher 
+PORT=80 CONFIG="config.json" ./go-fetcher 
