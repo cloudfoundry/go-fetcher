@@ -6,7 +6,7 @@ import (
 )
 
 type Config struct {
-	Domain  string
+	Host  string
 	OrgList []string
 }
 

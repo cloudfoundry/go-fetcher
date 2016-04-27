@@ -1,0 +1,3 @@
+#! /bin/bash
+ROOT_DIR=$PWD APP_NAME=code-acceptance DOMAIN=cfapps.io ./go-fetcher -generate_config="true"
+

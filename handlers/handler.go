@@ -20,7 +20,7 @@ func NewHandler(config config.Config) *handler {
 func (h *handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 		repoName := strings.Split(request.URL.Path, "/")[1]
 		fmt.Fprintf(writer, "<meta name=\"go-import\" content=\"%s git %s\">",
-			h.config.Domain + "/" + repoName,
+			h.config.Host + "/" + repoName,
 			h.config.OrgList[0] + repoName,
 		)
 }

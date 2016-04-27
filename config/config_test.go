@@ -24,7 +24,7 @@ var _ = Describe("Load Configuration", func(){
 		Expect(err).NotTo(HaveOccurred())
 
 		jsonContent := []byte(fmt.Sprintf(` {
-				"domain": "test",
+				"host": "test",
 				"orgList": ["test_org"] 
 		}`))
 
@@ -42,7 +42,7 @@ var _ = Describe("Load Configuration", func(){
 		It("returns the parsed configuration", func(){
 			c, err := config.Parse(filePath)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(c.Domain).To(Equal("test"))
+			Expect(c.Host).To(Equal("test"))
 			Expect(c.OrgList).To(Equal([]string{"test_org"}))
 		})
 	})

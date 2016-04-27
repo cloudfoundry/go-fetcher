@@ -1,7 +1,7 @@
 ---
 application:
-  - name: code-acceptance
+  - name: {{.}}
 env:
   GOPACKAGENAME: github.com/cloudfoundry/go-fetcher/cmd/go-fetcher
   GOVERSION: go1.6
-  CONFIG: app/config.json
+  CONFIG: config.json

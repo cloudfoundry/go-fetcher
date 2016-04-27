@@ -1,5 +1,5 @@
 {
-  "Domain": "code-acceptance.cfapps.io",
+  "Host": "{{.}}",
   "OrgList": [
     "https://github.com/cloudfoundry/",
     "https://github.com/cloudfoundry-incubator/",
