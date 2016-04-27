@@ -1,6 +1,5 @@
 {
   "Domain": "code-acceptance.cfapps.io",
-  "Port": "80",
   "OrgList": [
     "https://github.com/cloudfoundry/",
     "https://github.com/cloudfoundry-incubator/",

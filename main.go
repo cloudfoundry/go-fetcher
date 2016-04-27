@@ -24,12 +24,16 @@ var orgFlag = flag.String(
 
 func main() {
 	port := os.Getenv("PORT")
-
 	if port == "" {
 		log.Fatal("$PORT must be set")
 	}
 
-	config, err := config.Parse("../config.json")
+	configFile := os.Getenv("CONFIG")
+	if configFile == "" {
+		configFile = "config.json"
+	}
+	config, err := config.Parse(configFile)
+
 	if err != nil {
 		panic(err)
 	}

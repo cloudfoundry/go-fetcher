@@ -28,7 +28,9 @@ var _ = Describe("Import Path Redirect Service", func() {
 		port = strconv.Itoa(8182 + gconf.GinkgoConfig.ParallelNode)
 		os.Setenv("PORT", port)
 
-		c, err = config.Parse("../config.json")
+		configFile := "../config.json"
+    os.Setenv("CONFIG", configFile)
+		c, err = config.Parse(configFile)
 		Expect(err).NotTo(HaveOccurred())
 
 		session, err = gexec.Start(exec.Command(goFetchBinary), GinkgoWriter, GinkgoWriter)
