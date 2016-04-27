@@ -1,4 +1,4 @@
-package main_test
+package handlers_test
 
 import (
 	"io/ioutil"
@@ -8,32 +8,30 @@ import (
 	"strconv"
 
 	. "github.com/onsi/ginkgo"
-	"github.com/onsi/ginkgo/config"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
+  "github.com/cloudfoundry/go-fetcher/config"
+	gconf "github.com/onsi/ginkgo/config"
 )
 
 var _ = Describe("Import Path Redirect Service", func() {
 	var (
 		port    string
-		domain  string
 		session *gexec.Session
 		err     error
+    c       *config.Config
 	)
 
 	BeforeEach(func() {
 		Expect(err).NotTo(HaveOccurred())
-		port = strconv.Itoa(8182 + config.GinkgoConfig.ParallelNode)
-		domain = "localhost"
+		port = strconv.Itoa(8182 + gconf.GinkgoConfig.ParallelNode)
 		os.Setenv("PORT", port)
 
-		args := []string{
-			"-orgList", "https://github.com/cloudfoundry/,https://github.com/cloudfoundry-incubator",
-			"-domain", domain,
-		}
+		c, err = config.Parse("../config.json")
+		Expect(err).NotTo(HaveOccurred())
 
-		session, err = gexec.Start(exec.Command(goFetchBinary, args...), GinkgoWriter, GinkgoWriter)
+		session, err = gexec.Start(exec.Command(goFetchBinary), GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 
 		Eventually(session).Should(gbytes.Say("go-fetch-server.ready"))
@@ -51,7 +49,7 @@ var _ = Describe("Import Path Redirect Service", func() {
 
 			body, err := ioutil.ReadAll(res.Body)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(body).To(ContainSubstring("<meta name=\"go-import\" content=\"" + domain + "/something git https://github.com/cloudfoundry/something\">"))
+			Expect(body).To(ContainSubstring("<meta name=\"go-import\" content=\"" + c.Domain + "/something git https://github.com/cloudfoundry/something\">"))
 		})
 	})
 })

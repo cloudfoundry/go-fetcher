@@ -6,8 +6,8 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
   "github.com/cloudfoundry/go-fetcher/handlers"
+  "github.com/cloudfoundry/go-fetcher/config"
 )
 
 var domain = flag.String(
@@ -29,11 +29,11 @@ func main() {
 		log.Fatal("$PORT must be set")
 	}
 
-	flag.Parse()
-	orgList := strings.Split(*orgFlag, ",")
-
-
-	handler := handlers.NewHandler(domain, orgList)
+	config, err := config.Parse("../config.json")
+	if err != nil {
+		panic(err)
+	}
+	handler := handlers.NewHandler(*config)
 	http.HandleFunc("/", handler.GetMeta)
 
 	fmt.Println("go-fetch-server.ready")
