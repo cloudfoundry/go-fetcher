@@ -1,26 +1,17 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+  "path/filepath"
+
   "github.com/cloudfoundry/go-fetcher/handlers"
   "github.com/cloudfoundry/go-fetcher/config"
 )
 
-var domain = flag.String(
-	"domain",
-	"",
-	"the address that we expect to receive requests on",
-)
 
-var orgFlag = flag.String(
-	"orgList",
-	"",
-	"a comma-separted list of github org urls to redirect import traffic to",
-)
 
 func main() {
 	port := os.Getenv("PORT")
@@ -28,13 +19,15 @@ func main() {
 		log.Fatal("$PORT must be set")
 	}
 
+  files, _ := filepath.Glob("*")
 	configFile := os.Getenv("CONFIG")
 	if configFile == "" {
-		configFile = "config.json"
+		configFile = "app/config.json"
 	}
 	config, err := config.Parse(configFile)
 
 	if err != nil {
+    fmt.Println(files)
 		panic(err)
 	}
 	handler := handlers.NewHandler(*config)
