@@ -22,6 +22,7 @@ var _ = Describe("Import Path Redirect Service", func() {
 	var (
 		port    string
 		absPath string
+		configFile string
 		session *gexec.Session
 		err     error
 		c       *config.Config
@@ -42,7 +43,7 @@ var _ = Describe("Import Path Redirect Service", func() {
 		os.Setenv("ROOT_DIR", absPath)
 
 		templateFile := os.Getenv("ROOT_DIR") + "/util/config.json.template"
-		configFile := os.Getenv("ROOT_DIR") + "/config.json"
+		configFile = fmt.Sprintf(os.Getenv("ROOT_DIR") + "/config-%d.json", GinkgoParallelNode())
 		util.GenerateConfig(templateFile, configFile)
     os.Setenv("CONFIG", configFile)
 		c, err = config.Parse(configFile)
@@ -57,7 +58,7 @@ var _ = Describe("Import Path Redirect Service", func() {
 	AfterEach(func() {
 		session.Kill().Wait()
 
-		err := os.Remove(os.Getenv("ROOT_DIR") + "/config.json")
+		err := os.Remove(configFile)
 
 		os.Unsetenv("APP_NAME")
 		os.Unsetenv("DOMAIN")
