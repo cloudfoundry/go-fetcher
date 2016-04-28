@@ -26,7 +26,24 @@ func (h *handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 		)
 
 		fmt.Fprintf(writer, "<meta name=\"go-source\" content=\"%s _ %s\">",
-		h.config.Host + "/" + repoName,
-		h.config.OrgList[0] + repoName,
-	)
+			h.config.Host + "/" + repoName,
+			h.config.OrgList[0] + repoName,
+		)
+
+		// do not redirect if the agent is known from the NoRedirect list
+	  if contains(h.config.NoRedirectAgents, request.Header.Get("User-Agent")){
+			return
+		}
+
+		fmt.Fprintf(writer, "<meta http-equiv=\"refresh\" content=\"0; url=https://godoc.org/%s/%s\">", h.config.Host, repoName)
+}
+
+
+func contains(slice []string, object string) bool {
+	for _, a := range slice {
+		if a == object {
+			return true
+		}
+	}
+	return false
 }

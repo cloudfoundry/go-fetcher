@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+  "fmt"
 	"strconv"
 	"path/filepath"
 
@@ -23,7 +24,10 @@ var _ = Describe("Import Path Redirect Service", func() {
 		absPath string
 		session *gexec.Session
 		err     error
-    c       *config.Config
+		c       *config.Config
+		req     *http.Request
+		res     *http.Response
+		client  *http.Client
 	)
 
 	BeforeEach(func() {
@@ -70,8 +74,58 @@ var _ = Describe("Import Path Redirect Service", func() {
 
 			body, err := ioutil.ReadAll(res.Body)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(body).To(ContainSubstring("<meta name=\"go-import\" content=\"" + c.Host + "/something git https://github.com/cloudfoundry/something\">"))
-			Expect(body).To(ContainSubstring("<meta name=\"go-source\" content=\"" + c.Host + "/something _ https://github.com/cloudfoundry/something\">"))
+			Expect(body).To(ContainSubstring(
+				"<meta name=\"go-import\" content=\"" +
+				c.Host +
+				"/something git https://github.com/cloudfoundry/something\">"))
+
+			Expect(body).To(ContainSubstring(
+				"<meta name=\"go-source\" content=\"" +
+				c.Host +
+				"/something _ https://github.com/cloudfoundry/something\">"))
+		})
+	})
+
+	Context("when attempting to deal with redirects", func() {
+    BeforeEach( func() {
+      client = &http.Client{}
+
+      req, err = http.NewRequest("GET",
+				"http://:" + port +
+				"/something/something-else/test?go-get=1", nil)
+
+      Expect(err).NotTo(HaveOccurred())
+    })
+
+    Context("when the user agent is not part of the NoRedirectAgents list", func() {
+			It("will redirect", func() {
+        req.Header.Set("User-Agent", "Mozilla/5.0")
+				res, err = client.Do(req)
+			  Expect(err).NotTo(HaveOccurred())
+			  defer res.Body.Close()
+
+				var body []byte
+        body, err = ioutil.ReadAll(res.Body)
+				Expect(err).NotTo(HaveOccurred())
+				expectedMeta := fmt.Sprintf("<meta http-equiv=\"refresh\" content=\"0; url=https://godoc.org/%s/something\">", c.Host)
+				Expect(body).To(ContainSubstring(expectedMeta))
+			})
+	  })
+
+		Context("when the user agent is part of the NoRedirectAgents list", func() {
+		  It("will not redirect", func() {
+				for _, agent := range c.NoRedirectAgents {
+					req.Header.Set("User-Agent", agent)
+					res, err = client.Do(req)
+					Expect(err).NotTo(HaveOccurred())
+					defer res.Body.Close()
+
+					var body []byte
+					body, err = ioutil.ReadAll(res.Body)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(body).NotTo(ContainSubstring("<meta http-equiv=\"refresh\" content=\"0; url=https://godoc.org/something/something\">"))
+				}
+      })
 		})
 	})
 })

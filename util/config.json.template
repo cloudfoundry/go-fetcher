@@ -4,5 +4,10 @@
     "https://github.com/cloudfoundry/",
     "https://github.com/cloudfoundry-incubator/",
     "https://github.com/cloudfoundry-attic/"
+  ],
+  "NoRedirectAgents": [
+    "Go-http-client",
+    "curl",
+    "GoDocBot"
   ]
 }

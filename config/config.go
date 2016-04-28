@@ -8,6 +8,7 @@ import (
 type Config struct {
 	Host  string
 	OrgList []string
+	NoRedirectAgents []string
 }
 
 func Parse(configPath string) (*Config, error) {

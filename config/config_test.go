@@ -25,7 +25,8 @@ var _ = Describe("Load Configuration", func(){
 
 		jsonContent := []byte(fmt.Sprintf(` {
 				"host": "test",
-				"orgList": ["test_org"] 
+				"orgList": ["test_org"],
+				"NoRedirectAgents": ["test_agent"]
 		}`))
 
 		err = ioutil.WriteFile(tmpDir+"/config.json", jsonContent, 0644)
@@ -44,6 +45,7 @@ var _ = Describe("Load Configuration", func(){
 			Expect(err).NotTo(HaveOccurred())
 			Expect(c.Host).To(Equal("test"))
 			Expect(c.OrgList).To(Equal([]string{"test_org"}))
+			Expect(c.NoRedirectAgents).To(Equal([]string{"test_agent"}))
 		})
 	})
 
