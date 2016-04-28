@@ -23,4 +23,9 @@ func (h *handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 			h.config.Host + "/" + repoName,
 			h.config.OrgList[0] + repoName,
 		)
+
+		fmt.Fprintf(writer, "<meta name=\"go-source\" content=\"%s _ %s\">",
+		h.config.Host + "/" + repoName,
+		h.config.OrgList[0] + repoName,
+	)
 }

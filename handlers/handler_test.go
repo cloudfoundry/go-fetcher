@@ -64,13 +64,14 @@ var _ = Describe("Import Path Redirect Service", func() {
 
 	Context("when a request specifies go-get=1", func() {
 		It("responds appropriately", func() {
-			res, err := http.Get("http://:" + port + "/something/something-else?go-get=1")
+			res, err := http.Get("http://:" + port + "/something/something-else/test?go-get=1")
 			Expect(err).NotTo(HaveOccurred())
 			defer res.Body.Close()
 
 			body, err := ioutil.ReadAll(res.Body)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(body).To(ContainSubstring("<meta name=\"go-import\" content=\"" + c.Host + "/something git https://github.com/cloudfoundry/something\">"))
+			Expect(body).To(ContainSubstring("<meta name=\"go-source\" content=\"" + c.Host + "/something _ https://github.com/cloudfoundry/something\">"))
 		})
 	})
 })
