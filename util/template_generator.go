@@ -6,8 +6,8 @@ import (
   "fmt"
 )
 
-func GenerateManifest(filePath string) error {
-	t, err := template.ParseFiles(filePath)
+func GenerateManifest(templatePath, targetPath string) error {
+	t, err := template.ParseFiles(templatePath)
 	if err != nil {
 		return err
 	}
@@ -16,11 +16,11 @@ func GenerateManifest(filePath string) error {
   if appName == "" {
     return fmt.Errorf("APP_NAME is missing")
   }
-  return generateActual(t, os.Getenv("ROOT_DIR") + "/manifest.yml", appName)
+  return generateActual(t, targetPath, appName)
 }
 
-func GenerateConfig(filePath string) error {
-	t, err := template.ParseFiles(filePath)
+func GenerateConfig(templatePath, targetPath string) error {
+	t, err := template.ParseFiles(templatePath)
 	if err != nil {
 		return err
 	}
@@ -30,15 +30,15 @@ func GenerateConfig(filePath string) error {
     return fmt.Errorf("APP_NAME or DOMAIN is missing")
   }
 
-  return generateActual(t, os.Getenv("ROOT_DIR") + "/config.json", appName + "." + domain)
+  return generateActual(t, targetPath, appName + "." + domain)
 }
 
-func generateActual(template *template.Template, filePath string, target string) error {
-	f, err := os.Create(filePath)
+func generateActual(template *template.Template, templatePath string, value string) error {
+	f, err := os.Create(templatePath)
   if err != nil {
 		return err
   }
-	err = template.Execute(f, target)
+	err = template.Execute(f, value)
 	if err != nil {
 		return err
 	}

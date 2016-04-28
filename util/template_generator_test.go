@@ -5,6 +5,9 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/cloudfoundry/go-fetcher/util"
 
+	"os"
+  "fmt"
+	"path/filepath"
 	"io/ioutil"
 )
 
@@ -12,38 +15,75 @@ var _ = Describe("Generate Application Templates", func(){
 
   var (
 		err error
+		manifestTemplateFile, manifestTargetFile string
+		configTemplateFile, configTargetFile string
 	)
 
+	AfterEach(func(){
+		err = os.Remove(manifestTargetFile)
+		Expect(err).NotTo(HaveOccurred())
+		err = os.Remove(configTargetFile)
+		Expect(err).NotTo(HaveOccurred())
+
+		os.Unsetenv("APP_NAME")
+		os.Unsetenv("DOMAIN")
+		os.Unsetenv("ROOT_DIR")
+	})
+
+	BeforeEach(func(){
+		os.Setenv("APP_NAME", "code-acceptance")
+		os.Setenv("DOMAIN", "cfapps.io")
+
+		absPath, err := filepath.Abs("..")
+		Expect(err).NotTo(HaveOccurred())
+		os.Setenv("ROOT_DIR", absPath)
+
+		manifestTemplateFile = "manifest.yml.template"
+		manifestTargetFile   = fmt.Sprintf("../manifest-%d.yml", GinkgoParallelNode())
+		err = util.GenerateManifest(manifestTemplateFile, manifestTargetFile)
+		Expect(err).NotTo(HaveOccurred())
+
+		configTemplateFile = "config.json.template"
+		configTargetFile = fmt.Sprintf("../config-%d.json", GinkgoParallelNode())
+		err = util.GenerateConfig(configTemplateFile, configTargetFile)
+		Expect(err).NotTo(HaveOccurred())
+	})
+
 	Context("When the environment variables are present", func(){
+
+
 		It("should generate the application manifest", func() {
-			err = util.GenerateManifest("manifest.yml.template")
-			Expect(err).NotTo(HaveOccurred())
-			Expect("../manifest.yml").To(BeAnExistingFile())
+			Expect(manifestTargetFile).To(BeAnExistingFile())
 
 			var content []byte
-			content, err = ioutil.ReadFile("../manifest.yml")
+			content, err = ioutil.ReadFile(manifestTargetFile)
 			Expect(string(content)).To(ContainSubstring("code-acceptance\n"))
 		})
 
 		It("should generate the json configuration", func(){
-			err := util.GenerateConfig("config.json.template")
-			Expect(err).NotTo(HaveOccurred())
-			Expect("../config.json").To(BeAnExistingFile())
+			Expect(configTargetFile).To(BeAnExistingFile())
 
 			var content []byte
-			content, err = ioutil.ReadFile("../config.json")
+			content, err = ioutil.ReadFile(configTargetFile)
 			Expect(string(content)).To(ContainSubstring("code-acceptance.cfapps.io"))
 		})
 	})
 
 	Context("When environment variables are missing", func(){
+
+		JustBeforeEach(func(){
+			os.Unsetenv("APP_NAME")
+			os.Unsetenv("DOMAIN")
+			os.Unsetenv("ROOT_DIR")
+		})
+
 		It("should generate the application manifest", func() {
-			err = util.GenerateManifest("manifest.yml.template")
+			err = util.GenerateManifest(manifestTemplateFile, manifestTargetFile)
 			Expect(err).To(HaveOccurred())
 		})
 
 		It("should generate the application manifest", func() {
-			err = util.GenerateConfig("config.json.template")
+			err = util.GenerateConfig(configTemplateFile, configTargetFile)
 			Expect(err).To(HaveOccurred())
 		})
 	})

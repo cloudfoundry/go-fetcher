@@ -22,11 +22,16 @@ func main() {
 
 	flag.Parse()
 	if *generate_config == "true" {
-		err := util.GenerateConfig(os.Getenv("ROOT_DIR") + "/util/config.json.template")
+		templateFile := os.Getenv("ROOT_DIR") + "/util/config.json.template"
+		configFile := os.Getenv("ROOT_DIR") + "/config.json"
+		err := util.GenerateConfig(templateFile, configFile)
 		if err != nil {
 			log.Fatal(err)
 		}
-		err = util.GenerateManifest(os.Getenv("ROOT_DIR") + "/util/manifest.yml.template")
+
+		templateFile = os.Getenv("ROOT_DIR") + "/util/manifest.yml.template"
+		configFile = os.Getenv("ROOT_DIR") + "/manifest.yml"
+		err = util.GenerateManifest(templateFile, configFile)
 		if err != nil {
 			log.Fatal(err)
 		}

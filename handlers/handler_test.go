@@ -37,8 +37,9 @@ var _ = Describe("Import Path Redirect Service", func() {
 		Expect(err).NotTo(HaveOccurred())
 		os.Setenv("ROOT_DIR", absPath)
 
-		util.GenerateConfig(os.Getenv("ROOT_DIR") + "/util/config.json.template")
+		templateFile := os.Getenv("ROOT_DIR") + "/util/config.json.template"
 		configFile := os.Getenv("ROOT_DIR") + "/config.json"
+		util.GenerateConfig(templateFile, configFile)
     os.Setenv("CONFIG", configFile)
 		c, err = config.Parse(configFile)
 		Expect(err).NotTo(HaveOccurred())
