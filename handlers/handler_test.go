@@ -94,7 +94,6 @@ var _ = Describe("Import Path Redirect Service", func() {
       req, err = http.NewRequest("GET",
 				"http://:" + port +
 				"/something/something-else/test?go-get=1", nil)
-
       Expect(err).NotTo(HaveOccurred())
     })
 
@@ -108,7 +107,7 @@ var _ = Describe("Import Path Redirect Service", func() {
 				var body []byte
         body, err = ioutil.ReadAll(res.Body)
 				Expect(err).NotTo(HaveOccurred())
-				expectedMeta := fmt.Sprintf("<meta http-equiv=\"refresh\" content=\"0; url=https://godoc.org/%s/something\">", c.Host)
+				expectedMeta := fmt.Sprintf("<meta http-equiv=\"refresh\" content=\"0; url=https://godoc.org/%s/something/something-else/test\">", c.Host)
 				Expect(body).To(ContainSubstring(expectedMeta))
 			})
 	  })
@@ -124,7 +123,8 @@ var _ = Describe("Import Path Redirect Service", func() {
 					var body []byte
 					body, err = ioutil.ReadAll(res.Body)
 					Expect(err).NotTo(HaveOccurred())
-					Expect(body).NotTo(ContainSubstring("<meta http-equiv=\"refresh\" content=\"0; url=https://godoc.org/something/something\">"))
+					expectedMeta := fmt.Sprintf("<meta http-equiv=\"refresh\" content=\"0; url=https://godoc.org/%s/something/something-else/test\">", c.Host)
+					Expect(body).NotTo(ContainSubstring(expectedMeta))
 				}
       })
 		})
