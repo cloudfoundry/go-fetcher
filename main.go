@@ -20,6 +20,8 @@ var generate_config = flag.String(
 
 func main() {
 
+	// if the flag `generate_config` is set to true, run the code to generate
+	// config.json and manifest.yml from the provided templates
 	flag.Parse()
 	if *generate_config == "true" {
 		templateFile := os.Getenv("ROOT_DIR") + "/util/config.json.template"
