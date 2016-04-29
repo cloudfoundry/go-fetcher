@@ -1,25 +1,25 @@
 package util_test
 
 import (
+	"github.com/cloudfoundry/go-fetcher/util"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/cloudfoundry/go-fetcher/util"
 
-	"os"
-  "fmt"
-	"path/filepath"
+	"fmt"
 	"io/ioutil"
+	"os"
+	"path/filepath"
 )
 
-var _ = Describe("Generate Application Templates", func(){
+var _ = Describe("Generate Application Templates", func() {
 
-  var (
-		err error
+	var (
+		err                                      error
 		manifestTemplateFile, manifestTargetFile string
-		configTemplateFile, configTargetFile string
+		configTemplateFile, configTargetFile     string
 	)
 
-	AfterEach(func(){
+	AfterEach(func() {
 		err = os.Remove(manifestTargetFile)
 		Expect(err).NotTo(HaveOccurred())
 		err = os.Remove(configTargetFile)
@@ -30,7 +30,7 @@ var _ = Describe("Generate Application Templates", func(){
 		os.Unsetenv("ROOT_DIR")
 	})
 
-	BeforeEach(func(){
+	BeforeEach(func() {
 		os.Setenv("APP_NAME", "code-acceptance")
 		os.Setenv("DOMAIN", "cfapps.io")
 
@@ -39,7 +39,7 @@ var _ = Describe("Generate Application Templates", func(){
 		os.Setenv("ROOT_DIR", absPath)
 
 		manifestTemplateFile = "manifest.yml.template"
-		manifestTargetFile   = fmt.Sprintf("../manifest-%d.yml", GinkgoParallelNode())
+		manifestTargetFile = fmt.Sprintf("../manifest-%d.yml", GinkgoParallelNode())
 		err = util.GenerateManifest(manifestTemplateFile, manifestTargetFile)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -49,8 +49,7 @@ var _ = Describe("Generate Application Templates", func(){
 		Expect(err).NotTo(HaveOccurred())
 	})
 
-	Context("When the environment variables are present", func(){
-
+	Context("When the environment variables are present", func() {
 
 		It("should generate the application manifest", func() {
 			Expect(manifestTargetFile).To(BeAnExistingFile())
@@ -60,7 +59,7 @@ var _ = Describe("Generate Application Templates", func(){
 			Expect(string(content)).To(ContainSubstring("code-acceptance\n"))
 		})
 
-		It("should generate the json configuration", func(){
+		It("should generate the json configuration", func() {
 			Expect(configTargetFile).To(BeAnExistingFile())
 
 			var content []byte
@@ -69,9 +68,9 @@ var _ = Describe("Generate Application Templates", func(){
 		})
 	})
 
-	Context("When environment variables are missing", func(){
+	Context("When environment variables are missing", func() {
 
-		JustBeforeEach(func(){
+		JustBeforeEach(func() {
 			os.Unsetenv("APP_NAME")
 			os.Unsetenv("DOMAIN")
 			os.Unsetenv("ROOT_DIR")

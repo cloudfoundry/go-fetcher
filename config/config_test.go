@@ -1,9 +1,9 @@
 package config_test
 
 import (
+	"fmt"
 	"io/ioutil"
-  "fmt"
-  "os"
+	"os"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -11,14 +11,14 @@ import (
 	"github.com/cloudfoundry/go-fetcher/config"
 )
 
-var _ = Describe("Load Configuration", func(){
+var _ = Describe("Load Configuration", func() {
 
 	var (
-		tmpDir string
+		tmpDir   string
 		filePath string
 	)
 
-	BeforeEach(func(){
+	BeforeEach(func() {
 		var err error
 		tmpDir, err = ioutil.TempDir("", "")
 		Expect(err).NotTo(HaveOccurred())
@@ -34,13 +34,13 @@ var _ = Describe("Load Configuration", func(){
 		filePath = tmpDir + "/config.json"
 	})
 
-	AfterEach(func(){
+	AfterEach(func() {
 		err := os.RemoveAll(tmpDir)
-    Expect(err).NotTo(HaveOccurred())
+		Expect(err).NotTo(HaveOccurred())
 	})
 
-	Context("when there is a config file", func(){
-		It("returns the parsed configuration", func(){
+	Context("when there is a config file", func() {
+		It("returns the parsed configuration", func() {
 			c, err := config.Parse(filePath)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(c.Host).To(Equal("test"))

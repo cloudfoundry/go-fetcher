@@ -1,34 +1,34 @@
 package handlers_test
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
-  "fmt"
-	"strconv"
 	"path/filepath"
+	"strconv"
 
+	"github.com/cloudfoundry/go-fetcher/config"
+	"github.com/cloudfoundry/go-fetcher/util"
 	. "github.com/onsi/ginkgo"
+	gconf "github.com/onsi/ginkgo/config"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
-  "github.com/cloudfoundry/go-fetcher/config"
-  "github.com/cloudfoundry/go-fetcher/util"
-	gconf "github.com/onsi/ginkgo/config"
 )
 
 var _ = Describe("Import Path Redirect Service", func() {
 	var (
-		port    string
-		absPath string
+		port       string
+		absPath    string
 		configFile string
-		session *gexec.Session
-		err     error
-		c       *config.Config
-		req     *http.Request
-		res     *http.Response
-		client  *http.Client
+		session    *gexec.Session
+		err        error
+		c          *config.Config
+		req        *http.Request
+		res        *http.Response
+		client     *http.Client
 	)
 
 	BeforeEach(func() {
@@ -43,9 +43,9 @@ var _ = Describe("Import Path Redirect Service", func() {
 		os.Setenv("ROOT_DIR", absPath)
 
 		templateFile := os.Getenv("ROOT_DIR") + "/util/config.json.template"
-		configFile = fmt.Sprintf(os.Getenv("ROOT_DIR") + "/config-%d.json", GinkgoParallelNode())
+		configFile = fmt.Sprintf(os.Getenv("ROOT_DIR")+"/config-%d.json", GinkgoParallelNode())
 		util.GenerateConfig(templateFile, configFile)
-    os.Setenv("CONFIG", configFile)
+		os.Setenv("CONFIG", configFile)
 		c, err = config.Parse(configFile)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -77,25 +77,23 @@ var _ = Describe("Import Path Redirect Service", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(body).To(ContainSubstring(
 				"<meta name=\"go-import\" content=\"" +
-				c.Host +
-				"/something git https://github.com/cloudfoundry/something\">"))
+					c.Host +
+					"/something git https://github.com/cloudfoundry/something\">"))
 
 			Expect(body).To(ContainSubstring(
 				"<meta name=\"go-source\" content=\"" +
-				c.Host +
-				"/something _ https://github.com/cloudfoundry/something\">"))
+					c.Host +
+					"/something _ https://github.com/cloudfoundry/something\">"))
 		})
 	})
 
 	Context("when attempting to deal with redirects", func() {
 
-		Context("when go-get is set", func(){
-			BeforeEach( func() {
+		Context("when go-get is set", func() {
+			BeforeEach(func() {
 				client = &http.Client{}
 
-				req, err = http.NewRequest("GET",
-					"http://:" + port +
-					"/something/something-else/test?go-get=1", nil)
+				req, err = http.NewRequest("GET", "http://:"+port+"/something/something-else/test?go-get=1", nil)
 				Expect(err).NotTo(HaveOccurred())
 			})
 
@@ -132,13 +130,11 @@ var _ = Describe("Import Path Redirect Service", func() {
 			})
 		})
 
-		Context("when go-get is not set", func(){
-			BeforeEach( func() {
+		Context("when go-get is not set", func() {
+			BeforeEach(func() {
 				client = &http.Client{}
 
-				req, err = http.NewRequest("GET",
-					"http://:" + port +
-					"/something", nil)
+				req, err = http.NewRequest("GET", "http://:"+port+"/something", nil)
 				Expect(err).NotTo(HaveOccurred())
 			})
 
@@ -152,7 +148,7 @@ var _ = Describe("Import Path Redirect Service", func() {
 					var body []byte
 					body, err = ioutil.ReadAll(res.Body)
 					Expect(err).NotTo(HaveOccurred())
-					expectedMeta := fmt.Sprintf("<meta http-equiv=\"refresh\" content=\"0; url=%s\">", c.OrgList[0] + "something")
+					expectedMeta := fmt.Sprintf("<meta http-equiv=\"refresh\" content=\"0; url=%s\">", c.OrgList[0]+"something")
 					Expect(body).To(ContainSubstring(expectedMeta))
 				})
 			})
@@ -168,7 +164,7 @@ var _ = Describe("Import Path Redirect Service", func() {
 						var body []byte
 						body, err = ioutil.ReadAll(res.Body)
 						Expect(err).NotTo(HaveOccurred())
-						expectedMeta := fmt.Sprintf("<meta http-equiv=\"refresh\" content=\"0; url=%s\">", c.OrgList[0] + "something")
+						expectedMeta := fmt.Sprintf("<meta http-equiv=\"refresh\" content=\"0; url=%s\">", c.OrgList[0]+"something")
 						Expect(body).NotTo(ContainSubstring(expectedMeta))
 					}
 				})

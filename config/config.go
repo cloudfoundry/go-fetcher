@@ -1,18 +1,18 @@
 package config
 
 import (
-  "encoding/json"
+	"encoding/json"
 	"io/ioutil"
 )
 
 type Config struct {
-	Host  string
-	OrgList []string
+	Host             string
+	OrgList          []string
 	NoRedirectAgents []string
 }
 
 func Parse(configPath string) (*Config, error) {
-  jsonBlob, err := ioutil.ReadFile(configPath)
+	jsonBlob, err := ioutil.ReadFile(configPath)
 
 	if err != nil {
 		return nil, err

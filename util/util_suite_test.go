@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-var err  error
+var err error
 
 func TestUtil(t *testing.T) {
 	RegisterFailHandler(Fail)

@@ -1,21 +1,21 @@
 package main
 
 import (
-	"fmt"
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
 
-  "github.com/cloudfoundry/go-fetcher/handlers"
-  "github.com/cloudfoundry/go-fetcher/config"
-  "github.com/cloudfoundry/go-fetcher/util"
+	"github.com/cloudfoundry/go-fetcher/config"
+	"github.com/cloudfoundry/go-fetcher/handlers"
+	"github.com/cloudfoundry/go-fetcher/util"
 )
 
 var generate_config = flag.String(
-		"generate_config",
-		"",
-		"Generate deployment configurations",
+	"generate_config",
+	"",
+	"Generate deployment configurations",
 )
 
 func main() {
