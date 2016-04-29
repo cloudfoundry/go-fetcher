@@ -41,6 +41,10 @@ func (h *handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 			fmt.Fprintf(writer, 
 				"<meta http-equiv=\"refresh\" content=\"0; url=https://godoc.org/%s/%s\">",
 				h.config.Host, repoPath)
+		} else {
+			fmt.Fprintf(writer, 
+				"<meta http-equiv=\"refresh\" content=\"0; url=%s\">",
+				h.config.OrgList[0] + repoPath)
 		}
 }
 

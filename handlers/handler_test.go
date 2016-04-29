@@ -100,7 +100,7 @@ var _ = Describe("Import Path Redirect Service", func() {
 			})
 
 			Context("when the user agent is not part of the NoRedirectAgents list", func() {
-				It("will redirect", func() {
+				It("will redirect to godoc.org", func() {
 					req.Header.Set("User-Agent", "Mozilla/5.0")
 					res, err = client.Do(req)
 					Expect(err).NotTo(HaveOccurred())
@@ -138,13 +138,13 @@ var _ = Describe("Import Path Redirect Service", func() {
 
 				req, err = http.NewRequest("GET",
 					"http://:" + port +
-					"/something/something-else/test", nil)
+					"/something", nil)
 				Expect(err).NotTo(HaveOccurred())
 			})
 
-			It("will not redirect", func() {
-				for _, agent := range c.NoRedirectAgents {
-					req.Header.Set("User-Agent", agent)
+			Context("when the user agent is not part of the NoRedirectAgents list", func() {
+				It("will redirect github.com", func() {
+					req.Header.Set("User-Agent", "Mozilla/5.0")
 					res, err = client.Do(req)
 					Expect(err).NotTo(HaveOccurred())
 					defer res.Body.Close()
@@ -152,12 +152,27 @@ var _ = Describe("Import Path Redirect Service", func() {
 					var body []byte
 					body, err = ioutil.ReadAll(res.Body)
 					Expect(err).NotTo(HaveOccurred())
-					expectedMeta := fmt.Sprintf("<meta http-equiv=\"refresh\" content=\"0; url=https://godoc.org/%s/something/something-else/test\">", c.Host)
-					Expect(body).NotTo(ContainSubstring(expectedMeta))
-				}
+					expectedMeta := fmt.Sprintf("<meta http-equiv=\"refresh\" content=\"0; url=%s\">", c.OrgList[0] + "something")
+					Expect(body).To(ContainSubstring(expectedMeta))
+				})
+			})
+
+			Context("when the user agent is part of the NoRedirectAgents list", func() {
+				It("will not redirect", func() {
+					for _, agent := range c.NoRedirectAgents {
+						req.Header.Set("User-Agent", agent)
+						res, err = client.Do(req)
+						Expect(err).NotTo(HaveOccurred())
+						defer res.Body.Close()
+
+						var body []byte
+						body, err = ioutil.ReadAll(res.Body)
+						Expect(err).NotTo(HaveOccurred())
+						expectedMeta := fmt.Sprintf("<meta http-equiv=\"refresh\" content=\"0; url=%s\">", c.OrgList[0] + "something")
+						Expect(body).NotTo(ContainSubstring(expectedMeta))
+					}
+				})
 			})
 		})
-
-
 	})
 })
