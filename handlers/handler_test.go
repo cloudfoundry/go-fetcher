@@ -88,32 +88,61 @@ var _ = Describe("Import Path Redirect Service", func() {
 	})
 
 	Context("when attempting to deal with redirects", func() {
-    BeforeEach( func() {
-      client = &http.Client{}
 
-      req, err = http.NewRequest("GET",
-				"http://:" + port +
-				"/something/something-else/test?go-get=1", nil)
-      Expect(err).NotTo(HaveOccurred())
-    })
+		Context("when go-get is set", func(){
+			BeforeEach( func() {
+				client = &http.Client{}
 
-    Context("when the user agent is not part of the NoRedirectAgents list", func() {
-			It("will redirect", func() {
-        req.Header.Set("User-Agent", "Mozilla/5.0")
-				res, err = client.Do(req)
-			  Expect(err).NotTo(HaveOccurred())
-			  defer res.Body.Close()
-
-				var body []byte
-        body, err = ioutil.ReadAll(res.Body)
+				req, err = http.NewRequest("GET",
+					"http://:" + port +
+					"/something/something-else/test?go-get=1", nil)
 				Expect(err).NotTo(HaveOccurred())
-				expectedMeta := fmt.Sprintf("<meta http-equiv=\"refresh\" content=\"0; url=https://godoc.org/%s/something/something-else/test\">", c.Host)
-				Expect(body).To(ContainSubstring(expectedMeta))
 			})
-	  })
 
-		Context("when the user agent is part of the NoRedirectAgents list", func() {
-		  It("will not redirect", func() {
+			Context("when the user agent is not part of the NoRedirectAgents list", func() {
+				It("will redirect", func() {
+					req.Header.Set("User-Agent", "Mozilla/5.0")
+					res, err = client.Do(req)
+					Expect(err).NotTo(HaveOccurred())
+					defer res.Body.Close()
+
+					var body []byte
+					body, err = ioutil.ReadAll(res.Body)
+					Expect(err).NotTo(HaveOccurred())
+					expectedMeta := fmt.Sprintf("<meta http-equiv=\"refresh\" content=\"0; url=https://godoc.org/%s/something/something-else/test\">", c.Host)
+					Expect(body).To(ContainSubstring(expectedMeta))
+				})
+			})
+
+			Context("when the user agent is part of the NoRedirectAgents list", func() {
+				It("will not redirect", func() {
+					for _, agent := range c.NoRedirectAgents {
+						req.Header.Set("User-Agent", agent)
+						res, err = client.Do(req)
+						Expect(err).NotTo(HaveOccurred())
+						defer res.Body.Close()
+
+						var body []byte
+						body, err = ioutil.ReadAll(res.Body)
+						Expect(err).NotTo(HaveOccurred())
+						expectedMeta := fmt.Sprintf("<meta http-equiv=\"refresh\" content=\"0; url=https://godoc.org/%s/something/something-else/test\">", c.Host)
+						Expect(body).NotTo(ContainSubstring(expectedMeta))
+					}
+				})
+			})
+		})
+
+		Context("when go-get is not set", func(){
+			BeforeEach( func() {
+				client = &http.Client{}
+
+				req, err = http.NewRequest("GET",
+					"http://:" + port +
+					"/something/something-else/test", nil)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			It("will not redirect", func() {
 				for _, agent := range c.NoRedirectAgents {
 					req.Header.Set("User-Agent", agent)
 					res, err = client.Do(req)
@@ -126,7 +155,9 @@ var _ = Describe("Import Path Redirect Service", func() {
 					expectedMeta := fmt.Sprintf("<meta http-equiv=\"refresh\" content=\"0; url=https://godoc.org/%s/something/something-else/test\">", c.Host)
 					Expect(body).NotTo(ContainSubstring(expectedMeta))
 				}
-      })
+			})
 		})
+
+
 	})
 })
