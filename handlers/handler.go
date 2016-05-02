@@ -2,9 +2,10 @@ package handlers
 
 import (
 	"fmt"
-	"github.com/cloudfoundry/go-fetcher/config"
 	"net/http"
 	"strings"
+
+	"github.com/cloudfoundry/go-fetcher/config"
 )
 
 type handler struct {
@@ -24,14 +25,16 @@ func (h *handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 	// do not redirect if the agent is known from the NoRedirect list
 	if !contains(h.config.NoRedirectAgents, request.Header.Get("User-Agent")) {
 		repoPath := strings.TrimLeft(request.URL.Path, "/")
-		// if go-get=1 redirect to godoc.org
+		// if go-get=1 redirect to godoc.org using an HTML redirect, as expected by go get
 		if request.URL.Query().Get("go-get") == "1" {
-			location := fmt.Sprintf("https://godoc.org/%s/%s", h.config.Host, repoPath)
-			http.Redirect(writer, request, location, http.StatusSeeOther)
+			fmt.Fprintf(writer,
+				"<meta http-equiv=\"refresh\" content=\"0; url=https://godoc.org/%s/%s\">",
+				h.config.Host, repoPath)
 		} else {
 			location := h.config.OrgList[0] + repoPath
 			http.Redirect(writer, request, location, http.StatusMovedPermanently)
 		}
+
 		return
 	}
 

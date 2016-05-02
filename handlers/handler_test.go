@@ -1,6 +1,7 @@
 package handlers_test
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -21,24 +22,18 @@ import (
 var _ = Describe("Import Path Redirect Service", func() {
 	var (
 		port       string
-		absPath    string
 		configFile string
 		session    *gexec.Session
-		err        error
-		c          *config.Config
-		req        *http.Request
-		res        *http.Response
-		client     *http.Client
+		conf       *config.Config
 	)
 
 	BeforeEach(func() {
-		Expect(err).NotTo(HaveOccurred())
 		port = strconv.Itoa(8182 + gconf.GinkgoConfig.ParallelNode)
 		os.Setenv("PORT", port)
 		os.Setenv("APP_NAME", "code-acceptance")
 		os.Setenv("DOMAIN", "cfapps.io")
 
-		absPath, err = filepath.Abs("..")
+		absPath, err := filepath.Abs("..")
 		Expect(err).NotTo(HaveOccurred())
 		os.Setenv("ROOT_DIR", absPath)
 
@@ -46,7 +41,7 @@ var _ = Describe("Import Path Redirect Service", func() {
 		configFile = fmt.Sprintf(os.Getenv("ROOT_DIR")+"/config-%d.json", GinkgoParallelNode())
 		util.GenerateConfig(templateFile, configFile)
 		os.Setenv("CONFIG", configFile)
-		c, err = config.Parse(configFile)
+		conf, err = config.Parse(configFile)
 		Expect(err).NotTo(HaveOccurred())
 
 		session, err = gexec.Start(exec.Command(goFetchBinary), GinkgoWriter, GinkgoWriter)
@@ -77,94 +72,105 @@ var _ = Describe("Import Path Redirect Service", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(body).To(ContainSubstring(
 				"<meta name=\"go-import\" content=\"" +
-					c.Host +
+					conf.Host +
 					"/something git https://github.com/cloudfoundry/something\">"))
 
 			Expect(body).To(ContainSubstring(
 				"<meta name=\"go-source\" content=\"" +
-					c.Host +
+					conf.Host +
 					"/something _ https://github.com/cloudfoundry/something\">"))
 		})
 	})
 
 	Context("when attempting to deal with redirects", func() {
-
-		Context("when go-get is set", func() {
-			BeforeEach(func() {
-				client = &http.Client{}
-
-				req, err = http.NewRequest("GET", "http://:"+port+"/something/something-else/test?go-get=1", nil)
-				Expect(err).NotTo(HaveOccurred())
-			})
-
-			Context("when the user agent is not part of the NoRedirectAgents list", func() {
-				It("will redirect to godoc.org", func() {
-					req.Header.Set("User-Agent", "Mozilla/5.0")
-					res, err = client.Do(req)
-					Expect(err).NotTo(HaveOccurred())
-					defer res.Body.Close()
-
-					var body []byte
-					body, err = ioutil.ReadAll(res.Body)
-					Expect(err).NotTo(HaveOccurred())
-					expectedMeta := fmt.Sprintf("<meta http-equiv=\"refresh\" content=\"0; url=https://godoc.org/%s/something/something-else/test\">", c.Host)
-					Expect(body).To(ContainSubstring(expectedMeta))
-				})
-			})
-
-			Context("when the user agent is part of the NoRedirectAgents list", func() {
-				It("will not redirect", func() {
-					for _, agent := range c.NoRedirectAgents {
-						req.Header.Set("User-Agent", agent)
-						res, err = client.Do(req)
-						Expect(err).NotTo(HaveOccurred())
-						defer res.Body.Close()
-
-						var body []byte
-						body, err = ioutil.ReadAll(res.Body)
-						Expect(err).NotTo(HaveOccurred())
-						expectedMeta := fmt.Sprintf("<meta http-equiv=\"refresh\" content=\"0; url=https://godoc.org/%s/something/something-else/test\">", c.Host)
-						Expect(body).NotTo(ContainSubstring(expectedMeta))
-					}
-				})
-			})
-		})
-
 		Context("when go-get is not set", func() {
-			BeforeEach(func() {
-				client = &http.Client{}
+			var (
+				redirectCount int
+				client        *http.Client
+				req           *http.Request
+			)
 
+			BeforeEach(func() {
+				redirectCount = 0
+
+				client = &http.Client{
+					CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
+						redirectCount++
+						return errors.New("don't follow redirect in test")
+					},
+				}
+
+				var err error
 				req, err = http.NewRequest("GET", "http://:"+port+"/something", nil)
 				Expect(err).NotTo(HaveOccurred())
 			})
 
 			Context("when the user agent is not part of the NoRedirectAgents list", func() {
-				It("will redirect github.com", func() {
+				It("will redirect to godoc.org via HTTP redirects", func() {
 					req.Header.Set("User-Agent", "Mozilla/5.0")
-					res, err = client.Do(req)
+					_, err := client.Do(req)
+					Expect(err).To(MatchError(ContainSubstring("don't follow redirect in test")))
+
+					Expect(redirectCount).To(Equal(1))
+				})
+			})
+
+			Context("when the user agent is part of the NoRedirectAgents list", func() {
+				It("will not redirect", func() {
+					for _, agent := range conf.NoRedirectAgents {
+						req.Header.Set("User-Agent", agent)
+						res, err := client.Do(req)
+						Expect(err).NotTo(HaveOccurred())
+						defer res.Body.Close()
+
+						Expect(redirectCount).To(Equal(0))
+					}
+				})
+			})
+		})
+
+		Context("when go-get is set", func() {
+			var (
+				client *http.Client
+				req    *http.Request
+			)
+
+			BeforeEach(func() {
+				client = &http.Client{}
+
+				var err error
+				req, err = http.NewRequest("GET", "http://:"+port+"/something-else/test?go-get=1", nil)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			Context("when the user agent is not part of the NoRedirectAgents list", func() {
+				It("will redirect github.com with an HTML-based redirect", func() {
+					req.Header.Set("User-Agent", "Mozilla/5.0")
+
+					res, err := client.Do(req)
 					Expect(err).NotTo(HaveOccurred())
 					defer res.Body.Close()
 
 					var body []byte
 					body, err = ioutil.ReadAll(res.Body)
 					Expect(err).NotTo(HaveOccurred())
-					expectedMeta := fmt.Sprintf("<meta http-equiv=\"refresh\" content=\"0; url=%s\">", c.OrgList[0]+"something")
+					expectedMeta := fmt.Sprintf("<meta http-equiv=\"refresh\" content=\"0; url=https://godoc.org/%s/something-else/test\">", conf.Host)
 					Expect(body).To(ContainSubstring(expectedMeta))
 				})
 			})
 
 			Context("when the user agent is part of the NoRedirectAgents list", func() {
 				It("will not redirect", func() {
-					for _, agent := range c.NoRedirectAgents {
+					for _, agent := range conf.NoRedirectAgents {
 						req.Header.Set("User-Agent", agent)
-						res, err = client.Do(req)
+						res, err := client.Do(req)
 						Expect(err).NotTo(HaveOccurred())
 						defer res.Body.Close()
 
 						var body []byte
 						body, err = ioutil.ReadAll(res.Body)
 						Expect(err).NotTo(HaveOccurred())
-						expectedMeta := fmt.Sprintf("<meta http-equiv=\"refresh\" content=\"0; url=%s\">", c.OrgList[0]+"something")
+						expectedMeta := fmt.Sprintf("<meta http-equiv=\"refresh\" content=\"0; url=https://godoc.org/%s/something-else/test\">", conf.Host)
 						Expect(body).NotTo(ContainSubstring(expectedMeta))
 					}
 				})
