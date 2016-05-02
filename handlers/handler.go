@@ -29,7 +29,7 @@ func (h *handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 		if request.URL.Query().Get("go-get") == "1" {
 			fmt.Fprintf(writer,
 				"<meta http-equiv=\"refresh\" content=\"0; url=https://godoc.org/%s/%s\">",
-				h.config.Host, repoPath)
+				h.config.ImportPrefix, repoPath)
 		} else {
 			location := h.config.OrgList[0] + repoPath
 			http.Redirect(writer, request, location, http.StatusMovedPermanently)
@@ -39,12 +39,12 @@ func (h *handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	fmt.Fprintf(writer, "<meta name=\"go-import\" content=\"%s git %s\">",
-		h.config.Host+"/"+repoName,
+		h.config.ImportPrefix+"/"+repoName,
 		h.config.OrgList[0]+repoName,
 	)
 
 	fmt.Fprintf(writer, "<meta name=\"go-source\" content=\"%s _ %s\">",
-		h.config.Host+"/"+repoName,
+		h.config.ImportPrefix+"/"+repoName,
 		h.config.OrgList[0]+repoName,
 	)
 }

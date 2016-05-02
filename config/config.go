@@ -6,7 +6,7 @@ import (
 )
 
 type Config struct {
-	Host             string
+	ImportPrefix     string
 	OrgList          []string
 	NoRedirectAgents []string
 }
