@@ -50,7 +50,7 @@ func (h *Handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 				"<meta http-equiv=\"refresh\" content=\"0; url=https://godoc.org/%s/%s\">",
 				h.config.ImportPrefix, repoPath)
 		} else {
-			location := org + repoPath
+			location := org + repoName
 			http.Redirect(writer, request, location, http.StatusFound)
 		}
 

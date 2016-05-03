@@ -105,6 +105,21 @@ var _ = Describe("Handler", func() {
 		})
 	})
 
+	Context("when the request includes a subpackage", func() {
+		BeforeEach(func() {
+			var err error
+			req, err = http.NewRequest("GET", "/repo1/subpackage", nil)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("redirects to the base of the repository", func() {
+			Expect(res.Code).To(Equal(http.StatusFound))
+
+			headers := res.Header()
+			Expect(headers.Get("Location")).To(Equal(fmt.Sprintf("%s/org1/repo1", server.URL())))
+		})
+	})
+
 	Context("when the repo does not exist", func() {
 		BeforeEach(func() {
 			var err error
