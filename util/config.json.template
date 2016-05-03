@@ -1,5 +1,5 @@
 {
-  "Host": "{{.}}",
+  "ImportPrefix": "{{.}}",
   "OrgList": [
     "https://github.com/cloudfoundry/",
     "https://github.com/cloudfoundry-incubator/",
