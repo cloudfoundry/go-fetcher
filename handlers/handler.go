@@ -8,19 +8,38 @@ import (
 	"github.com/cloudfoundry/go-fetcher/config"
 )
 
-type handler struct {
+type Handler struct {
 	config config.Config
 }
 
-func NewHandler(config config.Config) *handler {
-	return &handler{
+func NewHandler(config config.Config) *Handler {
+	return &Handler{
 		config: config,
 	}
 }
 
-func (h *handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
+func (h *Handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 	repoName := strings.Split(request.URL.Path, "/")[1]
 	writer.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	org := ""
+	for idx := range h.config.OrgList {
+		response, err := http.Head(h.config.OrgList[idx] + repoName)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusBadGateway)
+			return
+		}
+
+		if response.StatusCode < 400 {
+			org = h.config.OrgList[idx]
+			break
+		}
+	}
+
+	if org == "" {
+		http.Error(writer, "", http.StatusNotFound)
+		return
+	}
 
 	// do not redirect if the agent is known from the NoRedirect list
 	if !contains(h.config.NoRedirectAgents, request.Header.Get("User-Agent")) {
@@ -31,7 +50,7 @@ func (h *handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 				"<meta http-equiv=\"refresh\" content=\"0; url=https://godoc.org/%s/%s\">",
 				h.config.ImportPrefix, repoPath)
 		} else {
-			location := h.config.OrgList[0] + repoPath
+			location := org + repoPath
 			http.Redirect(writer, request, location, http.StatusFound)
 		}
 
@@ -40,12 +59,12 @@ func (h *handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 
 	fmt.Fprintf(writer, "<meta name=\"go-import\" content=\"%s git %s\">",
 		h.config.ImportPrefix+"/"+repoName,
-		h.config.OrgList[0]+repoName,
+		org+repoName,
 	)
 
 	fmt.Fprintf(writer, "<meta name=\"go-source\" content=\"%s _ %s\">",
 		h.config.ImportPrefix+"/"+repoName,
-		h.config.OrgList[0]+repoName,
+		org+repoName,
 	)
 }
 
