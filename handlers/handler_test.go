@@ -108,8 +108,9 @@ var _ = Describe("Import Path Redirect Service", func() {
 			Context("when the user agent is not part of the NoRedirectAgents list", func() {
 				It("will redirect to godoc.org via HTTP redirects", func() {
 					req.Header.Set("User-Agent", "Mozilla/5.0")
-					_, err := client.Do(req)
+					req, err := client.Do(req)
 					Expect(err).To(MatchError(ContainSubstring("don't follow redirect in test")))
+					Expect(req.StatusCode).To(Equal(http.StatusFound))
 
 					Expect(redirectCount).To(Equal(1))
 				})

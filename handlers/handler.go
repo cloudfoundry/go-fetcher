@@ -32,7 +32,7 @@ func (h *handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 				h.config.ImportPrefix, repoPath)
 		} else {
 			location := h.config.OrgList[0] + repoPath
-			http.Redirect(writer, request, location, http.StatusMovedPermanently)
+			http.Redirect(writer, request, location, http.StatusFound)
 		}
 
 		return
