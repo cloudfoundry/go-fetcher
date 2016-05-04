@@ -9,5 +9,8 @@
     "Go-http-client",
     "curl",
     "GoDocBot"
-  ]
+  ],
+  "Overrides": {
+    "stager": "https://github.com/cloudfoundry-incubator/stager"
+  }
 }

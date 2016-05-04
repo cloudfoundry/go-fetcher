@@ -22,21 +22,29 @@ func (h *Handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 	repoName := strings.Split(request.URL.Path, "/")[1]
 	writer.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-	org := ""
-	for idx := range h.config.OrgList {
-		response, err := http.Head(h.config.OrgList[idx] + repoName)
-		if err != nil {
-			http.Error(writer, err.Error(), http.StatusBadGateway)
-			return
-		}
-
-		if response.StatusCode < 400 {
-			org = h.config.OrgList[idx]
-			break
+	location := ""
+	for k := range h.config.Overrides {
+		if k == repoName {
+			location = h.config.Overrides[k]
 		}
 	}
 
-	if org == "" {
+	if location == "" {
+		for idx := range h.config.OrgList {
+			response, err := http.Head(h.config.OrgList[idx] + repoName)
+			if err != nil {
+				http.Error(writer, err.Error(), http.StatusBadGateway)
+				return
+			}
+
+			if response.StatusCode < 400 {
+				location = h.config.OrgList[idx] + repoName
+				break
+			}
+		}
+	}
+
+	if location == "" {
 		http.Error(writer, "", http.StatusNotFound)
 		return
 	}
@@ -50,7 +58,6 @@ func (h *Handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 				"<meta http-equiv=\"refresh\" content=\"0; url=https://godoc.org/%s/%s\">",
 				h.config.ImportPrefix, repoPath)
 		} else {
-			location := org + repoName
 			http.Redirect(writer, request, location, http.StatusFound)
 		}
 
@@ -59,12 +66,12 @@ func (h *Handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 
 	fmt.Fprintf(writer, "<meta name=\"go-import\" content=\"%s git %s\">",
 		h.config.ImportPrefix+"/"+repoName,
-		org+repoName,
+		location,
 	)
 
 	fmt.Fprintf(writer, "<meta name=\"go-source\" content=\"%s _ %s\">",
 		h.config.ImportPrefix+"/"+repoName,
-		org+repoName,
+		location,
 	)
 }
 

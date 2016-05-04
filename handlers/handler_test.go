@@ -23,6 +23,7 @@ var _ = Describe("Handler", func() {
 		server.RouteToHandler("HEAD", "/org1/repo1", ghttp.RespondWith(http.StatusOK, ""))
 		server.RouteToHandler("HEAD", "/org2/repo1", ghttp.RespondWith(http.StatusOK, ""))
 		server.RouteToHandler("HEAD", "/org2/repo2", ghttp.RespondWith(http.StatusOK, ""))
+		server.RouteToHandler("HEAD", "/org2/overridden", ghttp.RespondWith(http.StatusOK, ""))
 
 		server.AllowUnhandledRequests = true
 		server.UnhandledRequestStatusCode = http.StatusNotFound
@@ -33,6 +34,8 @@ var _ = Describe("Handler", func() {
 				fmt.Sprintf("%s/org2/", server.URL())},
 			ImportPrefix:     "import-prefix",
 			NoRedirectAgents: []string{"NoRedirect"},
+			Overrides: map[string]string{
+				"overridden": fmt.Sprintf("%s/other-org/overridden", server.URL())},
 		})
 	})
 
@@ -129,6 +132,21 @@ var _ = Describe("Handler", func() {
 
 		It("returns a 404 Not Found", func() {
 			Expect(res.Code).To(Equal(http.StatusNotFound))
+		})
+	})
+
+	Context("when the repo exists in the override list", func() {
+		BeforeEach(func() {
+			var err error
+			req, err = http.NewRequest("GET", "/overridden", nil)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("redirects to the override value", func() {
+			Expect(res.Code).To(Equal(http.StatusFound))
+
+			headers := res.Header()
+			Expect(headers.Get("Location")).To(Equal(fmt.Sprintf("%s/other-org/overridden", server.URL())))
 		})
 	})
 

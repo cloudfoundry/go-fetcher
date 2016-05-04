@@ -9,6 +9,7 @@ type Config struct {
 	ImportPrefix     string
 	OrgList          []string
 	NoRedirectAgents []string
+	Overrides        map[string]string
 }
 
 func Parse(configPath string) (*Config, error) {
