@@ -7,7 +7,6 @@
   ],
   "NoRedirectAgents": [
     "Go-http-client",
-    "curl",
     "GoDocBot"
   ],
   "Overrides": {
