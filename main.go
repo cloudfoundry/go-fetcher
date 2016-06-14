@@ -10,20 +10,22 @@ import (
 	"github.com/cloudfoundry/go-fetcher/config"
 	"github.com/cloudfoundry/go-fetcher/handlers"
 	"github.com/cloudfoundry/go-fetcher/util"
+
+	"github.com/pivotal-golang/lager"
 )
 
-var generate_config = flag.String(
+var generate_config = flag.Bool(
 	"generate_config",
-	"",
+	false,
 	"Generate deployment configurations",
 )
 
 func main() {
-
 	// if the flag `generate_config` is set to true, run the code to generate
 	// config.json and manifest.yml from the provided templates
 	flag.Parse()
-	if *generate_config == "true" {
+
+	if *generate_config {
 		templateFile := os.Getenv("ROOT_DIR") + "/util/config.json.template"
 		configFile := os.Getenv("ROOT_DIR") + "/config.json"
 		err := util.GenerateConfig(templateFile, configFile)
@@ -40,18 +42,23 @@ func main() {
 		return
 	}
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		log.Fatal("$PORT must be set")
-	}
-
 	configFile := os.Getenv("CONFIG")
 	config, err := config.Parse(configFile)
 
 	if err != nil {
-		log.Fatal("config file error: ", err)
+		panic("config file error: " + err.Error())
 	}
-	handler := handlers.NewHandler(*config)
+
+	logger := lager.NewLogger("go-fetcher")
+	sink := lager.NewReconfigurableSink(lager.NewWriterSink(os.Stdout, lager.DEBUG), config.GetLogLevel())
+	logger.RegisterSink(sink)
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		logger.Error("server.failed", fmt.Errorf("$PORT must be set"))
+	}
+
+	handler := handlers.NewHandler(*config, logger)
 	http.HandleFunc("/", handler.GetMeta)
 
 	fmt.Println("go-fetch-server.ready")

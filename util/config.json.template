@@ -1,4 +1,5 @@
 {
+  "LogLevel": "info",
   "ImportPrefix": "{{.}}",
   "OrgList": [
     "https://github.com/cloudfoundry/",

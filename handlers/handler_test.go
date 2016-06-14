@@ -10,6 +10,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/ghttp"
+	"github.com/pivotal-golang/lager/lagertest"
 )
 
 var _ = Describe("Handler", func() {
@@ -17,6 +18,7 @@ var _ = Describe("Handler", func() {
 	var handler *handlers.Handler
 	var req *http.Request
 	var res *httptest.ResponseRecorder
+	var logger *lagertest.TestLogger
 
 	BeforeEach(func() {
 		server = ghttp.NewServer()
@@ -28,7 +30,10 @@ var _ = Describe("Handler", func() {
 		server.AllowUnhandledRequests = true
 		server.UnhandledRequestStatusCode = http.StatusNotFound
 
+		logger = lagertest.NewTestLogger("test")
+
 		handler = handlers.NewHandler(config.Config{
+			LogLevel: "info",
 			OrgList: []string{
 				fmt.Sprintf("%s/org1/", server.URL()),
 				fmt.Sprintf("%s/org2/", server.URL())},
@@ -36,7 +41,7 @@ var _ = Describe("Handler", func() {
 			NoRedirectAgents: []string{"NoRedirect"},
 			Overrides: map[string]string{
 				"overridden": fmt.Sprintf("%s/other-org/overridden", server.URL())},
-		})
+		}, logger)
 	})
 
 	AfterEach(func() {

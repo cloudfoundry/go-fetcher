@@ -47,6 +47,7 @@ var _ = Describe("Import Path Redirect Service", func() {
 
 		configFile = fmt.Sprintf(os.Getenv("ROOT_DIR")+"/config-%d.json", GinkgoParallelNode())
 		conf = &config.Config{
+			LogLevel:     "info",
 			ImportPrefix: "the.canonical.import.path",
 			OrgList: []string{
 				fmt.Sprintf("%s/cloudfoundry/", fakeGithubServer.URL()),
