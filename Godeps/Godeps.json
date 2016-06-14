@@ -1,5 +1,5 @@
 {
 	"ImportPath": "github.com/cloudfoundry/go-fetcher",
-	"GoVersion": "go1.6",
+	"GoVersion": "go1.4",
 	"Deps": []
 }
