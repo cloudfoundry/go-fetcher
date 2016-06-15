@@ -1,6 +1,6 @@
 {
   "LogLevel": "info",
-  "ImportPrefix": "{{.}}",
+  "ImportPrefix": "{{.APP_NAME}}",
   "OrgList": [
     "https://github.com/cloudfoundry/",
     "https://github.com/cloudfoundry-incubator/",
