@@ -1,2 +1,2 @@
 #!/bin/bash
-./go-fetcher -generate_config="true"
+./go-fetcher -generate_config=true
