@@ -2,6 +2,9 @@
 	"ImportPath": "github.com/cloudfoundry/go-fetcher",
 	"GoVersion": "go1.6",
 	"GodepVersion": "v74",
+	"Packages": [
+		"./..."
+	],
 	"Deps": [
 		{
 			"ImportPath": "github.com/golang/protobuf/proto",
@@ -159,6 +162,10 @@
 		},
 		{
 			"ImportPath": "github.com/pivotal-golang/lager",
+			"Rev": "7639e31ce6622c55c15aa64144b85d5f4873d127"
+		},
+		{
+			"ImportPath": "github.com/pivotal-golang/lager/lagertest",
 			"Rev": "7639e31ce6622c55c15aa64144b85d5f4873d127"
 		},
 		{
