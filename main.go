@@ -10,6 +10,10 @@ import (
 	"github.com/cloudfoundry/go-fetcher/config"
 	"github.com/cloudfoundry/go-fetcher/handlers"
 	"github.com/cloudfoundry/go-fetcher/util"
+	"github.com/tedsuo/ifrit"
+	"github.com/tedsuo/ifrit/grouper"
+	"github.com/tedsuo/ifrit/http_server"
+	"github.com/tedsuo/ifrit/sigmon"
 
 	"github.com/pivotal-golang/lager"
 )
@@ -61,6 +65,23 @@ func main() {
 	handler := handlers.NewHandler(*config, logger)
 	http.HandleFunc("/", handler.GetMeta)
 
-	fmt.Println("go-fetch-server.ready")
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	httpServer := http_server.New(":"+port, http.DefaultServeMux)
+
+	members := grouper.Members{
+		{"http_server", httpServer},
+	}
+
+	group := grouper.NewOrdered(os.Interrupt, members)
+
+	monitor := ifrit.Invoke(sigmon.New(group))
+
+	logger.Info("started")
+
+	err = <-monitor.Wait()
+	if err != nil {
+		logger.Error("exited-with-failure", err)
+		os.Exit(1)
+	}
+
+	logger.Info("exited")
 }

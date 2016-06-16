@@ -177,6 +177,22 @@
 			"Rev": "7639e31ce6622c55c15aa64144b85d5f4873d127"
 		},
 		{
+			"ImportPath": "github.com/tedsuo/ifrit",
+			"Rev": "dc9cce059aa32c53806fc6b4382b5d62751df0ce"
+		},
+		{
+			"ImportPath": "github.com/tedsuo/ifrit/grouper",
+			"Rev": "dc9cce059aa32c53806fc6b4382b5d62751df0ce"
+		},
+		{
+			"ImportPath": "github.com/tedsuo/ifrit/http_server",
+			"Rev": "dc9cce059aa32c53806fc6b4382b5d62751df0ce"
+		},
+		{
+			"ImportPath": "github.com/tedsuo/ifrit/sigmon",
+			"Rev": "dc9cce059aa32c53806fc6b4382b5d62751df0ce"
+		},
+		{
 			"ImportPath": "gopkg.in/yaml.v2",
 			"Rev": "a83829b6f1293c91addabc89d0571c246397bbf4"
 		}

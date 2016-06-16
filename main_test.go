@@ -67,7 +67,7 @@ var _ = Describe("Import Path Redirect Service", func() {
 		session, err = gexec.Start(exec.Command(goFetchBinary), GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 
-		Eventually(session).Should(gbytes.Say("go-fetch-server.ready"))
+		Eventually(session).Should(gbytes.Say("go-fetcher.started"))
 
 	})
 
@@ -131,6 +131,7 @@ var _ = Describe("Import Path Redirect Service", func() {
 					Expect(err).NotTo(HaveOccurred())
 
 					res, err := client.Do(req)
+					Expect(res).NotTo(BeNil())
 					Expect(res.StatusCode).To(Equal(http.StatusFound))
 					Expect(res.Header.Get("Location")).To(Equal(fmt.Sprintf("%s/cloudfoundry/something", fakeGithubServer.URL())))
 					Expect(err).To(MatchError(ContainSubstring("don't follow redirect in test")))
@@ -145,6 +146,7 @@ var _ = Describe("Import Path Redirect Service", func() {
 					Expect(err).NotTo(HaveOccurred())
 
 					res, err := client.Do(req)
+					Expect(res).NotTo(BeNil())
 					Expect(res.StatusCode).To(Equal(http.StatusFound))
 					Expect(res.Header.Get("Location")).To(Equal(fmt.Sprintf("%s/cloudfoundry-attic/repo-in-attic", fakeGithubServer.URL())))
 					Expect(err).To(MatchError(ContainSubstring("don't follow redirect in test")))
