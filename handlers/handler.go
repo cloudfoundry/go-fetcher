@@ -5,19 +5,23 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/cloudfoundry/go-fetcher/cache"
 	"github.com/cloudfoundry/go-fetcher/config"
+	"github.com/pivotal-golang/clock"
 	"github.com/pivotal-golang/lager"
 )
 
 type Handler struct {
-	config config.Config
-	logger lager.Logger
+	config        config.Config
+	logger        lager.Logger
+	locationCache *cache.LocationCache
 }
 
 func NewHandler(config config.Config, logger lager.Logger) *Handler {
 	return &Handler{
-		config: config,
-		logger: logger,
+		config:        config,
+		logger:        logger,
+		locationCache: cache.NewLocationCache(clock.NewClock()),
 	}
 }
 
@@ -31,6 +35,12 @@ func (h *Handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 	for k := range h.config.Overrides {
 		if k == repoName {
 			location = h.config.Overrides[k]
+		}
+	}
+
+	if location == "" {
+		if loc, ok := h.locationCache.Lookup(repoName); ok {
+			location = loc
 		}
 	}
 
@@ -56,6 +66,8 @@ func (h *Handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 		http.Error(writer, "", http.StatusNotFound)
 		return
 	}
+
+	h.locationCache.Add(repoName, location)
 
 	// do not redirect if the agent is known from the NoRedirect list
 	if !contains(h.config.NoRedirectAgents, request.Header.Get("User-Agent")) {
