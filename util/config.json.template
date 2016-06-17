@@ -1,6 +1,6 @@
 {
-  "LogLevel": "info",
-  "ImportPrefix": "{{.APP_NAME}}",
+  "LogLevel": "debug",
+  "ImportPrefix": "{{.APPDOMAIN_NAME}}",
   "OrgList": [
     "https://github.com/cloudfoundry/",
     "https://github.com/cloudfoundry-incubator/",
@@ -12,5 +12,7 @@
   ],
   "Overrides": {
     "stager": "https://github.com/cloudfoundry-incubator/stager"
-  }
+  },
+  "GithubAPIKey": "{{.GITHUB_APIKEY}}",
+  "GithubStatusEndpoint": "https://api.github.com/rate_limit?access_token="
 }

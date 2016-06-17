@@ -16,11 +16,13 @@ const (
 )
 
 type Config struct {
-	LogLevel         string
-	ImportPrefix     string
-	OrgList          []string
-	NoRedirectAgents []string
-	Overrides        map[string]string
+	LogLevel             string
+	ImportPrefix         string
+	OrgList              []string
+	NoRedirectAgents     []string
+	Overrides            map[string]string
+	GithubAPIKey         string
+	GithubStatusEndpoint string
 }
 
 func (c *Config) GetLogLevel() lager.LogLevel {

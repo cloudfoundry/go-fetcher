@@ -64,6 +64,7 @@ func main() {
 
 	handler := handlers.NewHandler(*config, logger)
 	http.HandleFunc("/", handler.GetMeta)
+	http.HandleFunc("/status", handler.Status)
 
 	httpServer := http_server.New(":"+port, http.DefaultServeMux)
 

@@ -29,12 +29,14 @@ var _ = Describe("Generate Application Templates", func() {
 		os.Unsetenv("DOMAIN")
 		os.Unsetenv("ROOT_DIR")
 		os.Unsetenv("SERVICE_NAME")
+		os.Unsetenv("GITHUB_APIKEY")
 	})
 
 	BeforeEach(func() {
 		os.Setenv("APP_NAME", "code-acceptance")
 		os.Setenv("DOMAIN", "cfapps.io")
-		os.Setenv("SERVICE_NAME", "test_service_name")
+		os.Setenv("SERVICE_NAME", "code-acceptance-papertrail")
+		os.Setenv("GITHUB_APIKEY", "some-key-key")
 
 		absPath, err := filepath.Abs("..")
 		Expect(err).NotTo(HaveOccurred())

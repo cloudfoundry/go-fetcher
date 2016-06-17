@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strings"
 
@@ -27,7 +28,7 @@ func NewHandler(config config.Config, logger lager.Logger) *Handler {
 
 func (h *Handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 	repoName := strings.Split(request.URL.Path, "/")[1]
-	logger := h.logger.Session("handler", lager.Data{"repo-name": repoName})
+	logger := h.logger.Session("handler.getmeta", lager.Data{"repo-name": repoName})
 
 	writer.Header().Set("Content-Type", "text/html; charset=utf-8")
 
@@ -95,6 +96,28 @@ func (h *Handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 	go_source := fmt.Sprintf("<meta name=\"go-source\" content=\"%s\">", go_source_content)
 	logger.Info("meta.go-source", lager.Data{"content": go_source_content})
 	fmt.Fprintf(writer, go_source)
+}
+
+func (h *Handler) Status(writer http.ResponseWriter, request *http.Request) {
+	logger := h.logger.Session("handler.status")
+	response, err := http.Get(h.config.GithubStatusEndpoint + h.config.GithubAPIKey)
+	if err != nil {
+		logger.Error("status.error", err)
+		http.Error(writer, "", http.StatusNotFound)
+		return
+	}
+	if response.StatusCode < 400 {
+		logger.Debug("github.response", lager.Data{"code": response.StatusCode})
+	} else {
+		body, _ := ioutil.ReadAll(response.Body)
+		logger.Error("github.error", fmt.Errorf(string(body)))
+		http.Error(writer, "error: "+string(body), response.StatusCode)
+		return
+	}
+	remaining := "remaining: " + response.Header.Get("X-RateLimit-Remaining")
+	fmt.Fprintf(writer, remaining)
+
+	return
 }
 
 func contains(slice []string, object string) bool {

@@ -6,8 +6,12 @@ import (
 	"os"
 )
 
-type TemplateMapper struct {
+type ManifestMapper struct {
 	APP_NAME, SERVICE_NAME string
+}
+
+type ConfigMapper struct {
+	APPDOMAIN_NAME, GITHUB_APIKEY string
 }
 
 func GenerateManifest(templatePath, targetPath string) error {
@@ -25,7 +29,7 @@ func GenerateManifest(templatePath, targetPath string) error {
 	if serviceName == "" {
 		return fmt.Errorf("SERVICE_NAME is missing")
 	}
-	var appNameMapper = TemplateMapper{appName, serviceName}
+	var appNameMapper = ManifestMapper{appName, serviceName}
 	return generateActual(t, targetPath, appNameMapper)
 }
 
@@ -36,16 +40,20 @@ func GenerateConfig(templatePath, targetPath string) error {
 	}
 	appName := os.Getenv("APP_NAME")
 	domain := os.Getenv("DOMAIN")
-	var appDomainMapper = TemplateMapper{appName + "." + domain, ""}
-
 	if appName == "" || domain == "" {
 		return fmt.Errorf("APP_NAME or DOMAIN is missing")
 	}
 
-	return generateActual(t, targetPath, appDomainMapper)
+	githubApiKey := os.Getenv("GITHUB_APIKEY")
+	if githubApiKey == "" {
+		return fmt.Errorf("GITHUB_APIKEY is missing")
+	}
+
+	var configMapper = ConfigMapper{appName + "." + domain, githubApiKey}
+	return generateActual(t, targetPath, configMapper)
 }
 
-func generateActual(template *template.Template, templatePath string, mappers TemplateMapper) error {
+func generateActual(template *template.Template, templatePath string, mappers interface{}) error {
 	f, err := os.Create(templatePath)
 	if err != nil {
 		return err
