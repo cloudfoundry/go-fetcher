@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/cloudfoundry/go-fetcher/cache"
 	"github.com/cloudfoundry/go-fetcher/config"
 	"github.com/cloudfoundry/go-fetcher/handlers"
 	"github.com/cloudfoundry/go-fetcher/util"
@@ -67,8 +68,10 @@ func main() {
 	http.HandleFunc("/status", handler.Status)
 
 	httpServer := http_server.New(":"+port, http.DefaultServeMux)
+	cacheLoader := cache.NewCacheLoader()
 
 	members := grouper.Members{
+		{"cache_loader", cacheLoader},
 		{"http_server", httpServer},
 	}
 
