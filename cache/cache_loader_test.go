@@ -4,6 +4,7 @@ import (
 	"github.com/cloudfoundry/go-fetcher/cache"
 	"github.com/cloudfoundry/go-fetcher/cache/fakes"
 	"github.com/google/go-github/github"
+	"github.com/pivotal-golang/clock"
 	"github.com/tedsuo/ifrit"
 
 	. "github.com/onsi/ginkgo"
@@ -14,11 +15,13 @@ var _ = Describe("CacheLoader", func() {
 	var (
 		fakeRepoService *fakes.FakeRepositoriesService
 		cacheLoader     ifrit.Runner
+		locCache        *cache.LocationCache
 	)
 
 	BeforeEach(func() {
 		fakeRepoService = &fakes.FakeRepositoriesService{}
-		cacheLoader = cache.NewCacheLoader([]string{"org1", "org2"}, fakeRepoService)
+		locCache = cache.NewLocationCache(clock.NewClock())
+		cacheLoader = cache.NewCacheLoader([]string{"org1", "org2"}, locCache, fakeRepoService)
 		fakeRepoService.ListByOrgReturns(nil, &github.Response{}, nil)
 	})
 
@@ -50,6 +53,31 @@ var _ = Describe("CacheLoader", func() {
 
 		org, _ = fakeRepoService.ListByOrgArgsForCall(1)
 		Expect(org).To(Equal("org2"))
+	})
+
+	It("stores the repos in the cache", func() {
+		returnedRepos := []github.Repository{}
+
+		name := "repo1"
+		returnedRepos = append(returnedRepos, github.Repository{
+			Name: &name,
+		})
+		name2 := "repo2"
+		returnedRepos = append(returnedRepos, github.Repository{
+			Name: &name2,
+		})
+		fakeRepoService.ListByOrgReturns(returnedRepos, &github.Response{}, nil)
+
+		cacheLoader = cache.NewCacheLoader([]string{"http://github.com/org1/"}, locCache, fakeRepoService)
+		ifrit.Invoke(cacheLoader)
+		storedLocation, foundInCache := locCache.Lookup("repo1")
+
+		Expect(foundInCache).To(BeTrue())
+		Expect(storedLocation).To(Equal("http://github.com/org1/repo1"))
+		storedLocation, foundInCache = locCache.Lookup("repo2")
+
+		Expect(foundInCache).To(BeTrue())
+		Expect(storedLocation).To(Equal("http://github.com/org1/repo2"))
 	})
 
 	It("follows the NextPage link in paginated results", func() {
