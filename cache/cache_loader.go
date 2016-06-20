@@ -23,7 +23,7 @@ type cacheLoader struct {
 
 //go:generate counterfeiter -o fakes/fake_repositories_service.go . RepositoriesService
 type RepositoriesService interface {
-	ListByOrg(org string, opt *github.RepositoryListByOrgOptions) ([]github.Repository, *github.Response, error)
+	ListByOrg(org string, opt *github.RepositoryListByOrgOptions) ([]*github.Repository, *github.Response, error)
 }
 
 func NewCacheLoader(logger lager.Logger, githubURL string, orgs []string, locationCache *LocationCache, repoService RepositoriesService, clock clock.Clock) ifrit.Runner {

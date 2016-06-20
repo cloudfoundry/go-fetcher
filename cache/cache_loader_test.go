@@ -36,7 +36,7 @@ var _ = Describe("CacheLoader", func() {
 	It("queries github before becoming ready", func() {
 		doneCh := make(chan struct{})
 
-		fakeRepoService.ListByOrgStub = func(org string, opt *github.RepositoryListByOrgOptions) ([]github.Repository, *github.Response, error) {
+		fakeRepoService.ListByOrgStub = func(org string, opt *github.RepositoryListByOrgOptions) ([]*github.Repository, *github.Response, error) {
 			<-doneCh
 			return nil, &github.Response{}, nil
 		}
@@ -64,17 +64,17 @@ var _ = Describe("CacheLoader", func() {
 	})
 
 	It("stores the repos in the cache", func() {
-		fakeRepoService.ListByOrgStub = func(org string, _ *github.RepositoryListByOrgOptions) ([]github.Repository, *github.Response, error) {
+		fakeRepoService.ListByOrgStub = func(org string, _ *github.RepositoryListByOrgOptions) ([]*github.Repository, *github.Response, error) {
 			if org == "org1" {
 				name := "repo1"
 				url := "http://example.com/org1/repo1"
-				return []github.Repository{{Name: &name, HTMLURL: &url}}, &github.Response{}, nil
+				return []*github.Repository{{Name: &name, HTMLURL: &url}}, &github.Response{}, nil
 			}
 
 			if org == "org2" {
 				name := "repo2"
 				url := "http://example.com/org2/repo2"
-				return []github.Repository{{Name: &name, HTMLURL: &url}}, &github.Response{}, nil
+				return []*github.Repository{{Name: &name, HTMLURL: &url}}, &github.Response{}, nil
 			}
 			return nil, nil, errors.New("not found")
 		}
@@ -92,15 +92,15 @@ var _ = Describe("CacheLoader", func() {
 
 	It("follows the NextPage link in paginated results", func() {
 		nextPage := 0
-		fakeRepoService.ListByOrgStub = func(org string, opt *github.RepositoryListByOrgOptions) ([]github.Repository, *github.Response, error) {
+		fakeRepoService.ListByOrgStub = func(org string, opt *github.RepositoryListByOrgOptions) ([]*github.Repository, *github.Response, error) {
 			if nextPage == 3 {
 				nextPage = 0 // 0 signals no more pages
 			} else {
 				nextPage++
 			}
-			return []github.Repository{
-					github.Repository{},
-					github.Repository{},
+			return []*github.Repository{
+					&github.Repository{},
+					&github.Repository{},
 				},
 				&github.Response{
 					NextPage: nextPage,

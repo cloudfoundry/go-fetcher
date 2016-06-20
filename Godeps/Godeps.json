@@ -11,6 +11,14 @@
 			"Rev": "8616e8ee5e20a1704615e6c8d7afcdac06087a67"
 		},
 		{
+			"ImportPath": "github.com/google/go-github/github",
+			"Rev": "07995e49c22dcb1e372c88ff12793b0194433e1c"
+		},
+		{
+			"ImportPath": "github.com/google/go-querystring/query",
+			"Rev": "9235644dd9e52eeae6fa48efd539fdc351a0af53"
+		},
+		{
 			"ImportPath": "github.com/onsi/ginkgo",
 			"Comment": "v1.2.0-57-g059cec0",
 			"Rev": "059cec02d342bab423425a99b191186a03255e9e"
@@ -191,6 +199,18 @@
 		{
 			"ImportPath": "github.com/tedsuo/ifrit/sigmon",
 			"Rev": "dc9cce059aa32c53806fc6b4382b5d62751df0ce"
+		},
+		{
+			"ImportPath": "golang.org/x/net/context",
+			"Rev": "7c71ca708c71bcbd0e6c856b01468ee07fe24557"
+		},
+		{
+			"ImportPath": "golang.org/x/oauth2",
+			"Rev": "65a8d08c6292395d47053be10b3c5e91960def76"
+		},
+		{
+			"ImportPath": "golang.org/x/oauth2/internal",
+			"Rev": "65a8d08c6292395d47053be10b3c5e91960def76"
 		},
 		{
 			"ImportPath": "gopkg.in/yaml.v2",

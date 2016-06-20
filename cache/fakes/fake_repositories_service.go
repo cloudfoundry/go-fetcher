@@ -9,14 +9,14 @@ import (
 )
 
 type FakeRepositoriesService struct {
-	ListByOrgStub        func(org string, opt *github.RepositoryListByOrgOptions) ([]github.Repository, *github.Response, error)
+	ListByOrgStub        func(org string, opt *github.RepositoryListByOrgOptions) ([]*github.Repository, *github.Response, error)
 	listByOrgMutex       sync.RWMutex
 	listByOrgArgsForCall []struct {
 		org string
 		opt *github.RepositoryListByOrgOptions
 	}
 	listByOrgReturns struct {
-		result1 []github.Repository
+		result1 []*github.Repository
 		result2 *github.Response
 		result3 error
 	}
@@ -24,7 +24,7 @@ type FakeRepositoriesService struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeRepositoriesService) ListByOrg(org string, opt *github.RepositoryListByOrgOptions) ([]github.Repository, *github.Response, error) {
+func (fake *FakeRepositoriesService) ListByOrg(org string, opt *github.RepositoryListByOrgOptions) ([]*github.Repository, *github.Response, error) {
 	fake.listByOrgMutex.Lock()
 	fake.listByOrgArgsForCall = append(fake.listByOrgArgsForCall, struct {
 		org string
@@ -51,10 +51,10 @@ func (fake *FakeRepositoriesService) ListByOrgArgsForCall(i int) (string, *githu
 	return fake.listByOrgArgsForCall[i].org, fake.listByOrgArgsForCall[i].opt
 }
 
-func (fake *FakeRepositoriesService) ListByOrgReturns(result1 []github.Repository, result2 *github.Response, result3 error) {
+func (fake *FakeRepositoriesService) ListByOrgReturns(result1 []*github.Repository, result2 *github.Response, result3 error) {
 	fake.ListByOrgStub = nil
 	fake.listByOrgReturns = struct {
-		result1 []github.Repository
+		result1 []*github.Repository
 		result2 *github.Response
 		result3 error
 	}{result1, result2, result3}
