@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/cloudfoundry/go-fetcher/cache"
 	"github.com/cloudfoundry/go-fetcher/config"
@@ -25,6 +26,8 @@ func NewHandler(logger lager.Logger, config config.Config, locationCache *cache.
 }
 
 func (h *Handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
+	start := time.Now()
+
 	repoName := strings.Split(request.URL.Path, "/")[1]
 	logger := h.logger.Session("handler.getmeta", lager.Data{"repo-name": repoName})
 
@@ -34,32 +37,38 @@ func (h *Handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 	for k := range h.config.Overrides {
 		if k == repoName {
 			location = h.config.Overrides[k]
+			logger.Debug("override", lager.Data{"location": location})
 		}
 	}
 
 	if location == "" {
 		if loc, ok := h.locationCache.Lookup(repoName); ok {
 			location = loc
+			logger.Debug("cache-hit", lager.Data{"location": location})
 		}
 	}
 
 	if location == "" {
-		logger.Error("repo.not_found", fmt.Errorf("Repo not in listed orgs"))
+		logger.Error("not-found", fmt.Errorf("repo not in cache or override list"))
 		http.Error(writer, "", http.StatusNotFound)
 		return
 	}
+
+	defer func() {
+		logger.Info("served", lager.Data{"duration": fmt.Sprint(time.Since(start)), "location": location})
+	}()
 
 	// do not redirect if the agent is known from the NoRedirect list
 	if !contains(h.config.NoRedirectAgents, request.Header.Get("User-Agent")) {
 		repoPath := strings.TrimLeft(request.URL.Path, "/")
 		// if go-get=1 redirect to godoc.org using an HTML redirect, as expected by go get
 		if request.URL.Query().Get("go-get") == "1" {
-			logger.Info("redirect.meta", lager.Data{"repoPath": repoPath})
+			logger.Debug("redirect.meta", lager.Data{"path": repoPath})
 			fmt.Fprintf(writer,
 				"<meta http-equiv=\"refresh\" content=\"0; url=https://godoc.org/%s/%s\">",
 				h.config.ImportPrefix, repoPath)
 		} else {
-			logger.Info("redirect.http", lager.Data{"location": location})
+			logger.Debug("redirect.http", lager.Data{"location": location})
 			http.Redirect(writer, request, location, http.StatusFound)
 		}
 
@@ -68,12 +77,12 @@ func (h *Handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 
 	goImportContent := fmt.Sprintf("%s git %s", h.config.ImportPrefix+"/"+repoName, location)
 	goImport := fmt.Sprintf("<meta name=\"go-import\" content=\"%s\">", goImportContent)
-	logger.Info("meta.go-import", lager.Data{"content": goImportContent})
+	logger.Debug("meta.go-import", lager.Data{"content": goImportContent})
 	fmt.Fprintf(writer, goImport)
 
 	goSourceContent := fmt.Sprintf("%s _ %s", h.config.ImportPrefix+"/"+repoName, location)
 	goSource := fmt.Sprintf("<meta name=\"go-source\" content=\"%s\">", goSourceContent)
-	logger.Info("meta.go-source", lager.Data{"content": goSourceContent})
+	logger.Debug("meta.go-source", lager.Data{"content": goSourceContent})
 	fmt.Fprintf(writer, goSource)
 }
 
