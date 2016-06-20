@@ -2,13 +2,11 @@ package handlers
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"strings"
 
 	"github.com/cloudfoundry/go-fetcher/cache"
 	"github.com/cloudfoundry/go-fetcher/config"
-	"github.com/pivotal-golang/clock"
 	"github.com/pivotal-golang/lager"
 )
 
@@ -18,11 +16,11 @@ type Handler struct {
 	locationCache *cache.LocationCache
 }
 
-func NewHandler(config config.Config, logger lager.Logger) *Handler {
+func NewHandler(logger lager.Logger, config config.Config, locationCache *cache.LocationCache) *Handler {
 	return &Handler{
 		config:        config,
 		logger:        logger,
-		locationCache: cache.NewLocationCache(clock.NewClock()),
+		locationCache: locationCache,
 	}
 }
 
@@ -46,29 +44,10 @@ func (h *Handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	if location == "" {
-		for idx := range h.config.OrgList {
-			response, err := http.Head(h.config.OrgList[idx] + repoName)
-			if err != nil {
-				logger.Error("github.response", err)
-				http.Error(writer, err.Error(), http.StatusBadGateway)
-				return
-			}
-
-			if response.StatusCode < 400 {
-				location = h.config.OrgList[idx] + repoName
-				logger.Debug("Repo found: " + location)
-				break
-			}
-		}
-	}
-
-	if location == "" {
 		logger.Error("repo.not_found", fmt.Errorf("Repo not in listed orgs"))
 		http.Error(writer, "", http.StatusNotFound)
 		return
 	}
-
-	h.locationCache.Add(repoName, location)
 
 	// do not redirect if the agent is known from the NoRedirect list
 	if !contains(h.config.NoRedirectAgents, request.Header.Get("User-Agent")) {
@@ -87,37 +66,15 @@ func (h *Handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	go_import_content := fmt.Sprintf("%s git %s", h.config.ImportPrefix+"/"+repoName, location)
-	go_import := fmt.Sprintf("<meta name=\"go-import\" content=\"%s\">", go_import_content)
-	logger.Info("meta.go-import", lager.Data{"content": go_import_content})
-	fmt.Fprintf(writer, go_import)
+	goImportContent := fmt.Sprintf("%s git %s", h.config.ImportPrefix+"/"+repoName, location)
+	goImport := fmt.Sprintf("<meta name=\"go-import\" content=\"%s\">", goImportContent)
+	logger.Info("meta.go-import", lager.Data{"content": goImportContent})
+	fmt.Fprintf(writer, goImport)
 
-	go_source_content := fmt.Sprintf("%s _ %s", h.config.ImportPrefix+"/"+repoName, location)
-	go_source := fmt.Sprintf("<meta name=\"go-source\" content=\"%s\">", go_source_content)
-	logger.Info("meta.go-source", lager.Data{"content": go_source_content})
-	fmt.Fprintf(writer, go_source)
-}
-
-func (h *Handler) Status(writer http.ResponseWriter, request *http.Request) {
-	logger := h.logger.Session("handler.status")
-	response, err := http.Get(h.config.GithubStatusEndpoint + h.config.GithubAPIKey)
-	if err != nil {
-		logger.Error("status.error", err)
-		http.Error(writer, "", http.StatusNotFound)
-		return
-	}
-	if response.StatusCode < 400 {
-		logger.Debug("github.response", lager.Data{"code": response.StatusCode})
-	} else {
-		body, _ := ioutil.ReadAll(response.Body)
-		logger.Error("github.error", fmt.Errorf(string(body)))
-		http.Error(writer, "error: "+string(body), response.StatusCode)
-		return
-	}
-	remaining := "remaining: " + response.Header.Get("X-RateLimit-Remaining")
-	fmt.Fprintf(writer, remaining)
-
-	return
+	goSourceContent := fmt.Sprintf("%s _ %s", h.config.ImportPrefix+"/"+repoName, location)
+	goSource := fmt.Sprintf("<meta name=\"go-source\" content=\"%s\">", goSourceContent)
+	logger.Info("meta.go-source", lager.Data{"content": goSourceContent})
+	fmt.Fprintf(writer, goSource)
 }
 
 func contains(slice []string, object string) bool {

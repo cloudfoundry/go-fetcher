@@ -1,6 +1,7 @@
 package cache_test
 
 import (
+	"errors"
 	"time"
 
 	"github.com/cloudfoundry/go-fetcher/cache"
@@ -8,6 +9,7 @@ import (
 	"github.com/google/go-github/github"
 	"github.com/pivotal-golang/clock"
 	"github.com/pivotal-golang/clock/fakeclock"
+	"github.com/pivotal-golang/lager/lagertest"
 	"github.com/tedsuo/ifrit"
 
 	. "github.com/onsi/ginkgo"
@@ -26,19 +28,20 @@ var _ = Describe("CacheLoader", func() {
 		fakeRepoService = &fakes.FakeRepositoriesService{}
 		fakeClock = fakeclock.NewFakeClock(time.Now())
 		locCache = cache.NewLocationCache(clock.NewClock())
-		cacheLoader = cache.NewCacheLoader([]string{"org1", "org2"}, locCache, fakeRepoService, fakeClock)
+		logger := lagertest.NewTestLogger("cache-loader")
+		cacheLoader = cache.NewCacheLoader(logger, "http://example.com", []string{"org1", "org2"}, locCache, fakeRepoService, fakeClock)
 		fakeRepoService.ListByOrgReturns(nil, &github.Response{}, nil)
 	})
 
 	It("queries github before becoming ready", func() {
-		cacheLoaderProcess := ifrit.Background(cacheLoader)
-
 		doneCh := make(chan struct{})
 
 		fakeRepoService.ListByOrgStub = func(org string, opt *github.RepositoryListByOrgOptions) ([]github.Repository, *github.Response, error) {
 			<-doneCh
 			return nil, &github.Response{}, nil
 		}
+
+		cacheLoaderProcess := ifrit.Background(cacheLoader)
 
 		Consistently(cacheLoaderProcess.Ready()).ShouldNot(BeClosed())
 		doneCh <- struct{}{}
@@ -61,28 +64,30 @@ var _ = Describe("CacheLoader", func() {
 	})
 
 	It("stores the repos in the cache", func() {
-		returnedRepos := []github.Repository{}
+		fakeRepoService.ListByOrgStub = func(org string, _ *github.RepositoryListByOrgOptions) ([]github.Repository, *github.Response, error) {
+			if org == "org1" {
+				name := "repo1"
+				url := "http://example.com/org1/repo1"
+				return []github.Repository{{Name: &name, HTMLURL: &url}}, &github.Response{}, nil
+			}
 
-		name := "repo1"
-		returnedRepos = append(returnedRepos, github.Repository{
-			Name: &name,
-		})
-		name2 := "repo2"
-		returnedRepos = append(returnedRepos, github.Repository{
-			Name: &name2,
-		})
-		fakeRepoService.ListByOrgReturns(returnedRepos, &github.Response{}, nil)
+			if org == "org2" {
+				name := "repo2"
+				url := "http://example.com/org2/repo2"
+				return []github.Repository{{Name: &name, HTMLURL: &url}}, &github.Response{}, nil
+			}
+			return nil, nil, errors.New("not found")
+		}
 
-		cacheLoader = cache.NewCacheLoader([]string{"http://github.com/org1/"}, locCache, fakeRepoService, fakeClock)
 		ifrit.Invoke(cacheLoader)
 		storedLocation, foundInCache := locCache.Lookup("repo1")
 
 		Expect(foundInCache).To(BeTrue())
-		Expect(storedLocation).To(Equal("http://github.com/org1/repo1"))
+		Expect(storedLocation).To(Equal("http://example.com/org1/repo1"))
 		storedLocation, foundInCache = locCache.Lookup("repo2")
 
 		Expect(foundInCache).To(BeTrue())
-		Expect(storedLocation).To(Equal("http://github.com/org1/repo2"))
+		Expect(storedLocation).To(Equal("http://example.com/org2/repo2"))
 	})
 
 	It("follows the NextPage link in paginated results", func() {

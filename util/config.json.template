@@ -1,10 +1,10 @@
 {
-  "LogLevel": "debug",
-  "ImportPrefix": "{{.APPDOMAIN_NAME}}",
+  "LogLevel": "info",
+  "ImportPrefix": "{{.appDomainName}}",
   "OrgList": [
-    "https://github.com/cloudfoundry/",
-    "https://github.com/cloudfoundry-incubator/",
-    "https://github.com/cloudfoundry-attic/"
+    "cloudfoundry",
+    "cloudfoundry-incubator",
+    "cloudfoundry-attic"
   ],
   "NoRedirectAgents": [
     "Go-http-client",
@@ -13,6 +13,6 @@
   "Overrides": {
     "stager": "https://github.com/cloudfoundry-incubator/stager"
   },
-  "GithubAPIKey": "{{.GITHUB_APIKEY}}",
-  "GithubStatusEndpoint": "https://api.github.com/rate_limit?access_token="
+  "GithubURL": "https://api.github.com"{{ if .githubAPIKey }},
+  "GithubAPIKey": "{{.githubAPIKey}}"{{ end }}
 }

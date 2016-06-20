@@ -28,14 +28,14 @@ var _ = Describe("Generate Application Templates", func() {
 		os.Unsetenv("APP_NAME")
 		os.Unsetenv("DOMAIN")
 		os.Unsetenv("ROOT_DIR")
-		os.Unsetenv("SERVICE_NAME")
+		os.Unsetenv("SERVICES")
 		os.Unsetenv("GITHUB_APIKEY")
 	})
 
 	BeforeEach(func() {
 		os.Setenv("APP_NAME", "code-acceptance")
 		os.Setenv("DOMAIN", "cfapps.io")
-		os.Setenv("SERVICE_NAME", "code-acceptance-papertrail")
+		os.Setenv("SERVICES", "code-acceptance-papertrail")
 		os.Setenv("GITHUB_APIKEY", "some-key-key")
 
 		absPath, err := filepath.Abs("..")
@@ -54,7 +54,6 @@ var _ = Describe("Generate Application Templates", func() {
 	})
 
 	Context("When the environment variables are present", func() {
-
 		It("should generate the application manifest", func() {
 			Expect(manifestTargetFile).To(BeAnExistingFile())
 

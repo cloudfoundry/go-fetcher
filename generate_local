@@ -1,3 +1,3 @@
 #! /bin/bash
-ROOT_DIR=$PWD APP_NAME="127" DOMAIN="0.0.1" ./go-fetcher -generate_config=true
+ROOT_DIR=$PWD APP_NAME="127" DOMAIN="0.0.1" go run main.go -generateConfig=true
 

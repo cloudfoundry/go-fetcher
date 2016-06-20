@@ -31,8 +31,32 @@ var _ = Describe("Import Path Redirect Service", func() {
 
 	BeforeEach(func() {
 		fakeGithubServer = ghttp.NewServer()
-		fakeGithubServer.RouteToHandler("HEAD", "/cloudfoundry/something", ghttp.RespondWith(http.StatusOK, ""))
-		fakeGithubServer.RouteToHandler("HEAD", "/cloudfoundry-attic/repo-in-attic", ghttp.RespondWith(http.StatusOK, ""))
+		fakeGithubServer.RouteToHandler("GET", "/orgs/cloudfoundry/repos", ghttp.RespondWithJSONEncoded(http.StatusOK, []map[string]interface{}{
+			{
+				"id":       1,
+				"name":     "repository-1",
+				"html_url": fmt.Sprintf("%s/cloudfoundry/repository-1", fakeGithubServer.URL()),
+			},
+			{
+				"id":       2,
+				"name":     "repository-2",
+				"html_url": fmt.Sprintf("%s/cloudfoundry/repository-2", fakeGithubServer.URL()),
+			},
+		}))
+		fakeGithubServer.RouteToHandler("GET", "/orgs/cloudfoundry-incubator/repos", ghttp.RespondWithJSONEncoded(http.StatusOK, []map[string]interface{}{
+			{
+				"id":       3,
+				"name":     "repo-in-incubator",
+				"html_url": fmt.Sprintf("%s/cloudfoundry-incubator/repo-in-incubator", fakeGithubServer.URL()),
+			},
+		}))
+		fakeGithubServer.RouteToHandler("GET", "/orgs/cloudfoundry-attic/repos", ghttp.RespondWithJSONEncoded(http.StatusOK, []map[string]interface{}{
+			{
+				"id":       4,
+				"name":     "repo-in-attic",
+				"html_url": fmt.Sprintf("%s/cloudfoundry-attic/repo-in-attic", fakeGithubServer.URL()),
+			},
+		}))
 
 		fakeGithubServer.AllowUnhandledRequests = true
 		fakeGithubServer.UnhandledRequestStatusCode = http.StatusNotFound
@@ -47,13 +71,10 @@ var _ = Describe("Import Path Redirect Service", func() {
 
 		configFile = fmt.Sprintf(os.Getenv("ROOT_DIR")+"/config-%d.json", GinkgoParallelNode())
 		conf = &config.Config{
-			LogLevel:     "info",
-			ImportPrefix: "the.canonical.import.path",
-			OrgList: []string{
-				fmt.Sprintf("%s/cloudfoundry/", fakeGithubServer.URL()),
-				fmt.Sprintf("%s/cloudfoundry-incubator/", fakeGithubServer.URL()),
-				fmt.Sprintf("%s/cloudfoundry-attic/", fakeGithubServer.URL()),
-			},
+			LogLevel:         "debug",
+			ImportPrefix:     "the.canonical.import.path",
+			GithubURL:        fakeGithubServer.URL(),
+			OrgList:          []string{"cloudfoundry", "cloudfoundry-incubator", "cloudfoundry-attic"},
 			NoRedirectAgents: []string{"some-agent", "some-other-agent"},
 		}
 
@@ -68,7 +89,6 @@ var _ = Describe("Import Path Redirect Service", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		Eventually(session).Should(gbytes.Say("go-fetcher.started"))
-
 	})
 
 	AfterEach(func() {
@@ -87,7 +107,7 @@ var _ = Describe("Import Path Redirect Service", func() {
 	Context("when the user agent is part of the NoRedirectAgents list", func() {
 		It("responds appropriately", func() {
 			client := &http.Client{}
-			req, err := http.NewRequest("GET", "http://:"+port+"/something/something-else/test", nil)
+			req, err := http.NewRequest("GET", "http://:"+port+"/repository-1/something-else/test", nil)
 			Expect(err).NotTo(HaveOccurred())
 			req.Header.Set("User-Agent", conf.NoRedirectAgents[0])
 
@@ -98,12 +118,12 @@ var _ = Describe("Import Path Redirect Service", func() {
 			body, err := ioutil.ReadAll(res.Body)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(body).To(ContainSubstring(fmt.Sprintf(
-				`<meta name="go-import" content="%s/something git %s/cloudfoundry/something">`,
+				`<meta name="go-import" content="%s/repository-1 git %s/cloudfoundry/repository-1">`,
 				conf.ImportPrefix,
 				fakeGithubServer.URL())))
 
 			Expect(body).To(ContainSubstring(fmt.Sprintf(
-				`<meta name="go-source" content="%s/something _ %s/cloudfoundry/something">`,
+				`<meta name="go-source" content="%s/repository-1 _ %s/cloudfoundry/repository-1">`,
 				conf.ImportPrefix,
 				fakeGithubServer.URL())))
 		})
@@ -127,13 +147,28 @@ var _ = Describe("Import Path Redirect Service", func() {
 
 			Context("when the repo is in cloudfoundry", func() {
 				It("will redirect to the true cloudfoundry source via HTTP redirects", func() {
-					req, err := http.NewRequest("GET", "http://:"+port+"/something", nil)
+					req, err := http.NewRequest("GET", "http://:"+port+"/repository-2", nil)
 					Expect(err).NotTo(HaveOccurred())
 
 					res, err := client.Do(req)
 					Expect(res).NotTo(BeNil())
 					Expect(res.StatusCode).To(Equal(http.StatusFound))
-					Expect(res.Header.Get("Location")).To(Equal(fmt.Sprintf("%s/cloudfoundry/something", fakeGithubServer.URL())))
+					Expect(res.Header.Get("Location")).To(Equal(fmt.Sprintf("%s/cloudfoundry/repository-2", fakeGithubServer.URL())))
+					Expect(err).To(MatchError(ContainSubstring("don't follow redirect in test")))
+
+					Expect(redirectCount).To(Equal(1))
+				})
+			})
+
+			Context("when the repo is in cloudfoundry-incubator", func() {
+				It("will redirect to the true cloudfoundry-incubator source via HTTP redirects", func() {
+					req, err := http.NewRequest("GET", "http://:"+port+"/repo-in-incubator", nil)
+					Expect(err).NotTo(HaveOccurred())
+
+					res, err := client.Do(req)
+					Expect(res).NotTo(BeNil())
+					Expect(res.StatusCode).To(Equal(http.StatusFound))
+					Expect(res.Header.Get("Location")).To(Equal(fmt.Sprintf("%s/cloudfoundry-incubator/repo-in-incubator", fakeGithubServer.URL())))
 					Expect(err).To(MatchError(ContainSubstring("don't follow redirect in test")))
 
 					Expect(redirectCount).To(Equal(1))
@@ -160,7 +195,7 @@ var _ = Describe("Import Path Redirect Service", func() {
 			It("will redirect to godoc.org with an HTML meta tag redirect", func() {
 				client := &http.Client{}
 
-				req, err := http.NewRequest("GET", "http://:"+port+"/something/test?go-get=1", nil)
+				req, err := http.NewRequest("GET", "http://:"+port+"/repository-1/test?go-get=1", nil)
 				Expect(err).NotTo(HaveOccurred())
 
 				res, err := client.Do(req)
@@ -170,7 +205,7 @@ var _ = Describe("Import Path Redirect Service", func() {
 				var body []byte
 				body, err = ioutil.ReadAll(res.Body)
 				Expect(err).NotTo(HaveOccurred())
-				expectedMeta := fmt.Sprintf("<meta http-equiv=\"refresh\" content=\"0; url=https://godoc.org/%s/something/test\">", conf.ImportPrefix)
+				expectedMeta := fmt.Sprintf("<meta http-equiv=\"refresh\" content=\"0; url=https://godoc.org/%s/repository-1/test\">", conf.ImportPrefix)
 				Expect(body).To(ContainSubstring(expectedMeta))
 			})
 		})

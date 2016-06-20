@@ -4,15 +4,8 @@ import (
 	"fmt"
 	"html/template"
 	"os"
+	"strings"
 )
-
-type ManifestMapper struct {
-	APP_NAME, SERVICE_NAME string
-}
-
-type ConfigMapper struct {
-	APPDOMAIN_NAME, GITHUB_APIKEY string
-}
 
 func GenerateManifest(templatePath, targetPath string) error {
 	t, err := template.ParseFiles(templatePath)
@@ -25,12 +18,12 @@ func GenerateManifest(templatePath, targetPath string) error {
 		return fmt.Errorf("APP_NAME is missing")
 	}
 
-	serviceName := os.Getenv("SERVICE_NAME")
-	if serviceName == "" {
-		return fmt.Errorf("SERVICE_NAME is missing")
+	services := os.Getenv("SERVICES")
+	serviceNames := strings.Split(services, ",")
+	if len(services) == 0 {
+		serviceNames = nil
 	}
-	var appNameMapper = ManifestMapper{appName, serviceName}
-	return generateActual(t, targetPath, appNameMapper)
+	return generateActual(t, targetPath, map[string]interface{}{"appName": appName, "services": serviceNames})
 }
 
 func GenerateConfig(templatePath, targetPath string) error {
@@ -44,13 +37,9 @@ func GenerateConfig(templatePath, targetPath string) error {
 		return fmt.Errorf("APP_NAME or DOMAIN is missing")
 	}
 
-	githubApiKey := os.Getenv("GITHUB_APIKEY")
-	if githubApiKey == "" {
-		return fmt.Errorf("GITHUB_APIKEY is missing")
-	}
+	githubAPIKey := os.Getenv("GITHUB_APIKEY")
 
-	var configMapper = ConfigMapper{appName + "." + domain, githubApiKey}
-	return generateActual(t, targetPath, configMapper)
+	return generateActual(t, targetPath, map[string]interface{}{"appDomainName": appName + "." + domain, "githubAPIKey": githubAPIKey})
 }
 
 func generateActual(template *template.Template, templatePath string, mappers interface{}) error {

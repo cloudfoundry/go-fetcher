@@ -5,22 +5,27 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
+
+	"golang.org/x/oauth2"
 
 	"github.com/cloudfoundry/go-fetcher/cache"
 	"github.com/cloudfoundry/go-fetcher/config"
 	"github.com/cloudfoundry/go-fetcher/handlers"
 	"github.com/cloudfoundry/go-fetcher/util"
+	"github.com/google/go-github/github"
 	"github.com/tedsuo/ifrit"
 	"github.com/tedsuo/ifrit/grouper"
 	"github.com/tedsuo/ifrit/http_server"
 	"github.com/tedsuo/ifrit/sigmon"
 
+	"github.com/pivotal-golang/clock"
 	"github.com/pivotal-golang/lager"
 )
 
-var generate_config = flag.Bool(
-	"generate_config",
+var generateConfig = flag.Bool(
+	"generateConfig",
 	false,
 	"Generate deployment configurations",
 )
@@ -30,7 +35,7 @@ func main() {
 	// config.json and manifest.yml from the provided templates
 	flag.Parse()
 
-	if *generate_config {
+	if *generateConfig {
 		templateFile := os.Getenv("ROOT_DIR") + "/util/config.json.template"
 		configFile := os.Getenv("ROOT_DIR") + "/config.json"
 		err := util.GenerateConfig(templateFile, configFile)
@@ -63,16 +68,35 @@ func main() {
 		logger.Error("server.failed", fmt.Errorf("$PORT must be set"))
 	}
 
-	handler := handlers.NewHandler(*config, logger)
+	clock := clock.NewClock()
+	locationCache := cache.NewLocationCache(clock)
+	handler := handlers.NewHandler(logger, *config, locationCache)
 	http.HandleFunc("/", handler.GetMeta)
-	http.HandleFunc("/status", handler.Status)
+
+	var tc *http.Client
+	if config.GithubAPIKey != "" {
+		ts := oauth2.StaticTokenSource(
+			&oauth2.Token{AccessToken: config.GithubAPIKey},
+		)
+		tc = oauth2.NewClient(oauth2.NoContext, ts)
+	}
+
+	client := github.NewClient(tc)
+	githubURL, err := url.Parse(config.GithubURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+	client.BaseURL = githubURL
 
 	httpServer := http_server.New(":"+port, http.DefaultServeMux)
-	cacheLoader := cache.NewCacheLoader()
+	cacheLoader := cache.NewCacheLoader(
+		logger.Session("cache-loader"),
+		config.GithubURL, config.OrgList, locationCache, client.Repositories, clock,
+	)
 
 	members := grouper.Members{
-		{"cache_loader", cacheLoader},
-		{"http_server", httpServer},
+		{"cache-loader", cacheLoader},
+		{"http-server", httpServer},
 	}
 
 	group := grouper.NewOrdered(os.Interrupt, members)

@@ -14,13 +14,12 @@ var _ = Describe("Location Cache", func() {
 	var locationCache *cache.LocationCache
 	var clock *fakeclock.FakeClock
 
+	BeforeEach(func() {
+		clock = fakeclock.NewFakeClock(time.Now())
+		locationCache = cache.NewLocationCache(clock)
+	})
+
 	Describe("Lookup", func() {
-
-		BeforeEach(func() {
-			clock = fakeclock.NewFakeClock(time.Now())
-			locationCache = cache.NewLocationCache(clock)
-		})
-
 		Context("when there is nothing in the cache", func() {
 			It("returns not ok", func() {
 				_, ok := locationCache.Lookup("something")

@@ -23,6 +23,7 @@ type Config struct {
 	Overrides            map[string]string
 	GithubAPIKey         string
 	GithubStatusEndpoint string
+	GithubURL string
 }
 
 func (c *Config) GetLogLevel() lager.LogLevel {

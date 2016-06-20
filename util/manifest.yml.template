@@ -1,9 +1,10 @@
 ---
 application:
-  - name: {{.APP_NAME}}
+  - name: {{.appName}}
 env:
   GOPACKAGENAME: github.com/cloudfoundry/go-fetcher/cmd/go-fetcher
   GOVERSION: go1.6
   CONFIG: config.json
-services:
-- {{.SERVICE_NAME}}
+{{ if .services }}services:{{ end }}
+{{ range .services }}- {{ . }}
+{{ end }}
