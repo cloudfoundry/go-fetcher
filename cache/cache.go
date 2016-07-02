@@ -33,7 +33,7 @@ func (l *LocationCache) Lookup(repoName string) (string, bool) {
 		return item.location, true
 	}
 
-	l.items[repoName] = nil
+	delete(l.items, repoName)
 
 	return "", false
 }

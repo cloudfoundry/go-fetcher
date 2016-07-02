@@ -46,6 +46,8 @@ var _ = Describe("Location Cache", func() {
 				clock.Increment(cache.CacheItemTTL + 1)
 				_, ok := locationCache.Lookup("repo-name")
 				Expect(ok).To(BeFalse())
+				_, ok = locationCache.Lookup("repo-name")
+				Expect(ok).To(BeFalse())
 			})
 		})
 	})
