@@ -69,7 +69,7 @@ func main() {
 	}
 
 	clock := clock.NewClock()
-	locationCache := cache.NewLocationCache(clock)
+	locationCache := cache.NewLocationCache(logger.Session("cache"), clock)
 	handler := handlers.NewHandler(logger, *config, locationCache)
 	http.HandleFunc("/", handler.GetMeta)
 

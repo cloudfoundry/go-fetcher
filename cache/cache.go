@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/pivotal-golang/clock"
+	"github.com/pivotal-golang/lager"
 )
 
 type cacheEntry struct {
@@ -13,26 +14,30 @@ type cacheEntry struct {
 }
 
 type LocationCache struct {
-	items map[string]*cacheEntry
-	clock clock.Clock
+	items  map[string]*cacheEntry
+	logger lager.Logger
+	clock  clock.Clock
 }
 
 const CacheItemTTL = 15 * time.Minute
 
-func NewLocationCache(clock clock.Clock) *LocationCache {
+func NewLocationCache(logger lager.Logger, clock clock.Clock) *LocationCache {
 	return &LocationCache{
-		items: map[string]*cacheEntry{},
-		clock: clock,
+		items:  map[string]*cacheEntry{},
+		logger: logger,
+		clock:  clock,
 	}
 }
 
 func (l *LocationCache) Lookup(repoName string) (string, bool) {
+	logger := l.logger
 	if item, ok := l.items[repoName]; !ok {
 		return "", false
 	} else if l.clock.Since(item.updatedAt) <= CacheItemTTL {
 		return item.location, true
 	}
 
+	logger.Info("remove-expired-entry", lager.Data{"repo": repoName})
 	delete(l.items, repoName)
 
 	return "", false

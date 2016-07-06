@@ -37,8 +37,9 @@ var _ = Describe("Handler", func() {
 		}
 
 		logger = lagertest.NewTestLogger("test")
+		cacheLogger := lagertest.NewTestLogger("cache")
 		clock := clock.NewClock()
-		locationCache = cache.NewLocationCache(clock)
+		locationCache = cache.NewLocationCache(cacheLogger, clock)
 		handler = handlers.NewHandler(logger, cfg, locationCache)
 	})
 

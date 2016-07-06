@@ -5,6 +5,7 @@ import (
 
 	"github.com/cloudfoundry/go-fetcher/cache"
 	"github.com/pivotal-golang/clock/fakeclock"
+	"github.com/pivotal-golang/lager/lagertest"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -16,7 +17,8 @@ var _ = Describe("Location Cache", func() {
 
 	BeforeEach(func() {
 		clock = fakeclock.NewFakeClock(time.Now())
-		locationCache = cache.NewLocationCache(clock)
+		logger := lagertest.NewTestLogger("cache")
+		locationCache = cache.NewLocationCache(logger, clock)
 	})
 
 	Describe("Lookup", func() {
