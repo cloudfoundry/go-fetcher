@@ -60,7 +60,6 @@ END
 The `go-fetcher` program expects environment variables to be set which indicate the port to listen on and the name of the configuration file.
 
 ```
-go build .
 ./generate_local && PORT=8800 CONFIG="config.json" go run main.go
 ```
 
