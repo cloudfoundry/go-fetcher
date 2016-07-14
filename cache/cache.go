@@ -19,8 +19,6 @@ type LocationCache struct {
 	clock  clock.Clock
 }
 
-const CacheItemTTL = 15 * time.Minute
-
 func NewLocationCache(logger lager.Logger, clock clock.Clock) *LocationCache {
 	return &LocationCache{
 		items:  map[string]*cacheEntry{},
@@ -30,17 +28,11 @@ func NewLocationCache(logger lager.Logger, clock clock.Clock) *LocationCache {
 }
 
 func (l *LocationCache) Lookup(repoName string) (string, bool) {
-	logger := l.logger
 	if item, ok := l.items[repoName]; !ok {
 		return "", false
-	} else if l.clock.Since(item.updatedAt) <= CacheItemTTL {
+	} else {
 		return item.location, true
 	}
-
-	logger.Info("remove-expired-entry", lager.Data{"repo": repoName})
-	delete(l.items, repoName)
-
-	return "", false
 }
 
 func (l *LocationCache) Add(repoName, location string) {

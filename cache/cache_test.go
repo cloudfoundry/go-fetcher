@@ -43,31 +43,6 @@ var _ = Describe("Location Cache", func() {
 				location, _ := locationCache.Lookup("repo-name")
 				Expect(location).To(Equal("cached-location"))
 			})
-
-			It("returns not ok after TTL expires", func() {
-				clock.Increment(cache.CacheItemTTL + 1)
-				_, ok := locationCache.Lookup("repo-name")
-				Expect(ok).To(BeFalse())
-				_, ok = locationCache.Lookup("repo-name")
-				Expect(ok).To(BeFalse())
-			})
-		})
-	})
-
-	Describe("Add", func() {
-		Context("when there is already an entry for the given key", func() {
-			BeforeEach(func() {
-				locationCache.Add("repo-name", "cached-location")
-			})
-
-			It("updates the TTL", func() {
-				clock.Increment(cache.CacheItemTTL - 1)
-				locationCache.Add("repo-name", "cached-location")
-
-				clock.Increment(cache.CacheItemTTL)
-				location, _ := locationCache.Lookup("repo-name")
-				Expect(location).To(Equal("cached-location"))
-			})
 		})
 	})
 
