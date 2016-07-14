@@ -167,8 +167,8 @@ var _ = Describe("CacheLoader", func() {
 		}
 
 		ifrit.Invoke(cacheLoader)
-		_, firstfoundInCache := locCache.Lookup("first-repo")
-		Expect(firstfoundInCache).To(BeTrue())
+		_, firstFoundInCache := locCache.Lookup("first-repo")
+		Expect(firstFoundInCache).To(BeTrue())
 
 		fakeRepoService.ListByOrgStub = func(org string, _ *github.RepositoryListByOrgOptions) ([]*github.Repository, *github.Response, error) {
 			if org == "org1" {
@@ -186,6 +186,8 @@ var _ = Describe("CacheLoader", func() {
 		}
 
 		fakeClock.WaitForWatcherAndIncrement(cache.CacheUpdateInterval)
-		Eventually(func() bool { _, found := locCache.Lookup("first-repo"); return found }).Should(BeFalse())
+		fakeClock.WaitForWatcherAndIncrement(1)
+		_, firstFoundInCache = locCache.Lookup("first-repo")
+		Expect(firstFoundInCache).To(BeFalse())
 	})
 })
