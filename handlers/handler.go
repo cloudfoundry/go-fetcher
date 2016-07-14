@@ -33,6 +33,14 @@ func (h *Handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 
 	writer.Header().Set("Content-Type", "text/html; charset=utf-8")
 
+	// Handle index requests (/, /index.htm, index.html)
+	for _, path := range []string{"/", "/index.htm", "/index.html"} {
+		if request.URL.Path == path {
+			logger.Debug("redirect.index", lager.Data{"location": request.URL.Path, "destination": h.config.IndexRedirect})
+			http.Redirect(writer, request, h.config.IndexRedirect, http.StatusFound)
+		}
+	}
+
 	location := ""
 	for k := range h.config.Overrides {
 		if k == repoName {

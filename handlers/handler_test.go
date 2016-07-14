@@ -27,6 +27,7 @@ var _ = Describe("Handler", func() {
 	BeforeEach(func() {
 		cfg = config.Config{
 			LogLevel:         "info",
+			IndexRedirect:    "https://index-redirect",
 			OrgList:          []string{"org1", "org2"},
 			ImportPrefix:     "import-prefix",
 			NoRedirectAgents: []string{"NoRedirect"},
@@ -41,6 +42,41 @@ var _ = Describe("Handler", func() {
 		clock := clock.NewClock()
 		locationCache = cache.NewLocationCache(cacheLogger, clock)
 		handler = handlers.NewHandler(logger, cfg, locationCache)
+	})
+
+	Context("when a default URL is requested", func() {
+		It("/ redirects to indexRedirect", func() {
+			req, err := http.NewRequest("GET", "/", nil)
+			Expect(err).NotTo(HaveOccurred())
+
+			res := httptest.NewRecorder()
+			handler.GetMeta(res, req)
+
+			headers := res.Header()
+			Expect(headers.Get("Location")).To(Equal("https://index-redirect"))
+		})
+
+		It("/index.htm redirects to indexRedirect", func() {
+			req, err := http.NewRequest("GET", "/index.htm", nil)
+			Expect(err).NotTo(HaveOccurred())
+
+			res := httptest.NewRecorder()
+			handler.GetMeta(res, req)
+
+			headers := res.Header()
+			Expect(headers.Get("Location")).To(Equal("https://index-redirect"))
+		})
+
+		It("/index.html redirects to indexRedirect", func() {
+			req, err := http.NewRequest("GET", "/index.html", nil)
+			Expect(err).NotTo(HaveOccurred())
+
+			res := httptest.NewRecorder()
+			handler.GetMeta(res, req)
+
+			headers := res.Header()
+			Expect(headers.Get("Location")).To(Equal("https://index-redirect"))
+		})
 	})
 
 	Describe("GetMeta", func() {

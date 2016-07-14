@@ -1,6 +1,7 @@
 {
   "LogLevel": "info",
   "ImportPrefix": "{{.appDomainName}}",
+  "IndexRedirect": "https://github.com/cloudfoundry/go-fetcher/blob/master/README.md",
   "OrgList": [
     "cloudfoundry",
     "cloudfoundry-incubator",

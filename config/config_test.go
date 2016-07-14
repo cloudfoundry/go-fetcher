@@ -25,6 +25,7 @@ var _ = Describe("Load Configuration", func() {
 
 		jsonContent := []byte(fmt.Sprintf(` {
 				"importPrefix": "test",
+				"indexRedirect": "index-redirect",
 				"orgList": ["test_org"],
 				"NoRedirectAgents": ["test_agent"]
 		}`))
@@ -44,6 +45,7 @@ var _ = Describe("Load Configuration", func() {
 			c, err := config.Parse(filePath)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(c.ImportPrefix).To(Equal("test"))
+			Expect(c.IndexRedirect).To(Equal("index-redirect"))
 			Expect(c.OrgList).To(Equal([]string{"test_org"}))
 			Expect(c.NoRedirectAgents).To(Equal([]string{"test_agent"}))
 		})
