@@ -70,4 +70,24 @@ var _ = Describe("Location Cache", func() {
 			})
 		})
 	})
+
+	Describe("Swap", func() {
+		Context("when we swapout the cache", func() {
+
+			It("the cache should contain only the new items", func() {
+				locationCache.Add("before-repo-name", "cached-location")
+
+				logger := lagertest.NewTestLogger("cache")
+				newLocationCache := cache.NewLocationCache(logger, clock)
+				newLocationCache.Add("new-repo-name", "new-cached-location")
+
+				locationCache.Swap(newLocationCache)
+				_, ok := locationCache.Lookup("before-repo-name")
+				Expect(ok).To(BeFalse())
+
+				_, ok = locationCache.Lookup("new-repo-name")
+				Expect(ok).To(BeTrue())
+			})
+		})
+	})
 })

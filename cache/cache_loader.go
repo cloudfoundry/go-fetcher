@@ -76,6 +76,7 @@ func (c *cacheLoader) updateCache(logger lager.Logger) error {
 	logger = logger.Session("update-cache")
 	logger.Info("fetching-orgs", lager.Data{"orgs": c.orgs})
 
+	tempLocationCache := NewLocationCache(c.logger, c.clock)
 	for i := len(c.orgs) - 1; i >= 0; i-- {
 		org := c.orgs[i]
 		logger.Info("fetching-org", lager.Data{"org": org})
@@ -98,7 +99,7 @@ func (c *cacheLoader) updateCache(logger lager.Logger) error {
 					continue
 				}
 
-				c.locationCache.Add(*repo.Name, *repo.HTMLURL)
+				tempLocationCache.Add(*repo.Name, *repo.HTMLURL)
 			}
 
 			logger.Info("finished-page", lager.Data{"org": org, "page": opt.Page, "next": resp.NextPage, "last": resp.LastPage})
@@ -109,6 +110,8 @@ func (c *cacheLoader) updateCache(logger lager.Logger) error {
 		}
 	}
 	logger.Info("finished-fetching-orgs", lager.Data{"orgs": c.orgs})
+
+	c.locationCache.Swap(tempLocationCache)
 
 	return nil
 }

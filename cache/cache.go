@@ -46,3 +46,10 @@ func (l *LocationCache) Lookup(repoName string) (string, bool) {
 func (l *LocationCache) Add(repoName, location string) {
 	l.items[repoName] = &cacheEntry{location: location, updatedAt: l.clock.Now()}
 }
+
+func (l *LocationCache) Swap(newLocationCache *LocationCache) {
+	logger := l.logger
+
+	logger.Info("cache-items-swap", lager.Data{"old_len": len(l.items), "new_len": len(newLocationCache.items)})
+	l.items = newLocationCache.items
+}
