@@ -58,10 +58,10 @@ var _ = Describe("CacheLoader", func() {
 		ifrit.Invoke(cacheLoader)
 
 		org, _ := fakeRepoService.ListByOrgArgsForCall(0)
-		Expect(org).To(Equal("org1"))
+		Expect(org).To(Equal("org2"))
 
 		org, _ = fakeRepoService.ListByOrgArgsForCall(1)
-		Expect(org).To(Equal("org2"))
+		Expect(org).To(Equal("org1"))
 	})
 
 	It("stores the repos in the cache", func() {
@@ -125,5 +125,28 @@ var _ = Describe("CacheLoader", func() {
 
 		fakeClock.WaitForWatcherAndIncrement(cache.CacheUpdateInterval)
 		Eventually(fakeRepoService.ListByOrgCallCount).Should(Equal(6))
+	})
+
+	It("Prefers the first org for each repo", func() {
+		fakeRepoService.ListByOrgStub = func(org string, _ *github.RepositoryListByOrgOptions) ([]*github.Repository, *github.Response, error) {
+			if org == "org1" {
+				name := "repo1"
+				url := "http://example.com/org1/repo1"
+				return []*github.Repository{{Name: &name, HTMLURL: &url}}, &github.Response{}, nil
+			}
+
+			if org == "org2" {
+				name := "repo1"
+				url := "http://example.com/org2/repo1"
+				return []*github.Repository{{Name: &name, HTMLURL: &url}}, &github.Response{}, nil
+			}
+			return nil, nil, errors.New("not found")
+		}
+
+		ifrit.Invoke(cacheLoader)
+		storedLocation, foundInCache := locCache.Lookup("repo1")
+
+		Expect(foundInCache).To(BeTrue())
+		Expect(storedLocation).To(Equal("http://example.com/org1/repo1"))
 	})
 })

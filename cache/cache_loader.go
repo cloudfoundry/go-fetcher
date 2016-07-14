@@ -75,7 +75,9 @@ func (c *cacheLoader) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 func (c *cacheLoader) updateCache(logger lager.Logger) error {
 	logger = logger.Session("update-cache")
 	logger.Info("fetching-orgs", lager.Data{"orgs": c.orgs})
-	for _, org := range c.orgs {
+
+	for i := len(c.orgs) - 1; i >= 0; i-- {
+		org := c.orgs[i]
 		logger.Info("fetching-org", lager.Data{"org": org})
 		opt := &github.RepositoryListByOrgOptions{
 			Type:        "public",
