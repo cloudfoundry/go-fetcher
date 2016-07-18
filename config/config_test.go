@@ -26,7 +26,8 @@ var _ = Describe("Load Configuration", func() {
 		jsonContent := []byte(fmt.Sprintf(` {
 				"importPrefix": "test",
 				"orgList": ["test_org"],
-				"NoRedirectAgents": ["test_agent"]
+				"NoRedirectAgents": ["test_agent"],
+				"IndexPath": "some_relative/path"
 		}`))
 
 		err = ioutil.WriteFile(tmpDir+"/config.json", jsonContent, 0644)
@@ -46,6 +47,7 @@ var _ = Describe("Load Configuration", func() {
 			Expect(c.ImportPrefix).To(Equal("test"))
 			Expect(c.OrgList).To(Equal([]string{"test_org"}))
 			Expect(c.NoRedirectAgents).To(Equal([]string{"test_agent"}))
+			Expect(c.IndexPath).To(Equal("some_relative/path"))
 		})
 	})
 

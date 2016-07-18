@@ -5,8 +5,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"path/filepath"
 
 	"github.com/cloudfoundry/go-fetcher/cache"
 	"github.com/cloudfoundry/go-fetcher/config"
@@ -37,6 +35,7 @@ var _ = Describe("Handler", func() {
 				"overridden": "http://override.org/other-org/overridden"},
 			GithubURL:    "http://example.com",
 			GithubAPIKey: "somekey-somekey",
+			IndexPath:    "../public/index.html",
 		}
 
 		logger = lagertest.NewTestLogger("test")
@@ -47,30 +46,19 @@ var _ = Describe("Handler", func() {
 	})
 
     Describe("Index", func() {
-    	var (
-    		indexHtmlPath string
-    		indexHtml     []byte
-    	)
+        var indexHtml []byte
 
     	JustBeforeEach(func() {
 			res = httptest.NewRecorder()
 			handler.GetMeta(res, req)
-
-            indexHtmlPath = os.Getenv("ROOT_DIR") + "/public/index.html"
-			indexHtml, _ = ioutil.ReadFile(indexHtmlPath)
+			indexHtml, _ = ioutil.ReadFile(cfg.IndexPath)
 		})
 
 		Context("when a default URL is requested", func() {
 			BeforeEach(func() {
-				absPath, err := filepath.Abs("../")
-		        Expect(err).NotTo(HaveOccurred())
-		        os.Setenv("ROOT_DIR", absPath)
+				var err error
 				req, err = http.NewRequest("GET", "/", nil)
 				Expect(err).NotTo(HaveOccurred())
-			})
-
-			AfterEach(func() {
-				os.Unsetenv("ROOT_DIR")
 			})
 
 			It("/ serves the static index page", func() {

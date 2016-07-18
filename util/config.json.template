@@ -14,5 +14,6 @@
     "stager": "https://github.com/cloudfoundry-incubator/stager"
   },
   "GithubURL": "https://api.github.com"{{ if .githubAPIKey }},
-  "GithubAPIKey": "{{.githubAPIKey}}"{{ end }}
+  "GithubAPIKey": "{{.githubAPIKey}}"{{ end }},
+  "IndexPath": "public/index.html"
 }

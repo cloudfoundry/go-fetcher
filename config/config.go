@@ -24,6 +24,7 @@ type Config struct {
 	GithubAPIKey         string
 	GithubStatusEndpoint string
 	GithubURL            string
+	IndexPath            string
 }
 
 func (c *Config) GetLogLevel() lager.LogLevel {

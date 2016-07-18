@@ -3,9 +3,9 @@ package handlers
 import (
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
 	"time"
+	"path/filepath"
 
 	"github.com/cloudfoundry/go-fetcher/cache"
 	"github.com/cloudfoundry/go-fetcher/config"
@@ -38,7 +38,11 @@ func (h *Handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 	for _, path := range []string{"/", "/index.htm", "/index.html"} {
 		if request.URL.Path == path {
 			logger.Debug("index-page", lager.Data{"location": request.URL.Path})
-			indexHtmlPath := os.Getenv("ROOT_DIR") + "/public/index.html"
+			indexHtmlPath, err := filepath.Abs(h.config.IndexPath)
+			
+			if err != nil {
+		      logger.Error("index-page", fmt.Errorf("could not get absolute path of IndexPath"))		
+			}
 			http.ServeFile(writer, request, indexHtmlPath)
 		    return
 		}
