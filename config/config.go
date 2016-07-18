@@ -18,7 +18,6 @@ const (
 type Config struct {
 	LogLevel             string
 	ImportPrefix         string
-	IndexRedirect        string
 	OrgList              []string
 	NoRedirectAgents     []string
 	Overrides            map[string]string

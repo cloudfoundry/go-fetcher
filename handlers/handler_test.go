@@ -2,8 +2,11 @@ package handlers_test
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 
 	"github.com/cloudfoundry/go-fetcher/cache"
 	"github.com/cloudfoundry/go-fetcher/config"
@@ -27,7 +30,6 @@ var _ = Describe("Handler", func() {
 	BeforeEach(func() {
 		cfg = config.Config{
 			LogLevel:         "info",
-			IndexRedirect:    "https://index-redirect",
 			OrgList:          []string{"org1", "org2"},
 			ImportPrefix:     "import-prefix",
 			NoRedirectAgents: []string{"NoRedirect"},
@@ -44,40 +46,53 @@ var _ = Describe("Handler", func() {
 		handler = handlers.NewHandler(logger, cfg, locationCache)
 	})
 
-	Context("when a default URL is requested", func() {
-		It("/ redirects to indexRedirect", func() {
-			req, err := http.NewRequest("GET", "/", nil)
-			Expect(err).NotTo(HaveOccurred())
+    Describe("Index", func() {
+    	var (
+    		indexHtmlPath string
+    		indexHtml     []byte
+    	)
 
-			res := httptest.NewRecorder()
+    	JustBeforeEach(func() {
+			res = httptest.NewRecorder()
 			handler.GetMeta(res, req)
 
-			headers := res.Header()
-			Expect(headers.Get("Location")).To(Equal("https://index-redirect"))
+            indexHtmlPath = os.Getenv("ROOT_DIR") + "/public/index.html"
+			indexHtml, _ = ioutil.ReadFile(indexHtmlPath)
 		})
 
-		It("/index.htm redirects to indexRedirect", func() {
-			req, err := http.NewRequest("GET", "/index.htm", nil)
-			Expect(err).NotTo(HaveOccurred())
+		Context("when a default URL is requested", func() {
+			BeforeEach(func() {
+				absPath, err := filepath.Abs("../")
+		        Expect(err).NotTo(HaveOccurred())
+		        os.Setenv("ROOT_DIR", absPath)
+				req, err = http.NewRequest("GET", "/", nil)
+				Expect(err).NotTo(HaveOccurred())
+			})
 
-			res := httptest.NewRecorder()
-			handler.GetMeta(res, req)
+			AfterEach(func() {
+				os.Unsetenv("ROOT_DIR")
+			})
 
-			headers := res.Header()
-			Expect(headers.Get("Location")).To(Equal("https://index-redirect"))
-		})
+			It("/ serves the static index page", func() {
+				Expect(res.Code).To(Equal(http.StatusOK))
+				body := res.Body.String()
+				Expect(body).To(Equal(string(indexHtml)))
+			})
 
-		It("/index.html redirects to indexRedirect", func() {
-			req, err := http.NewRequest("GET", "/index.html", nil)
-			Expect(err).NotTo(HaveOccurred())
+			It("/index.htm serves the static index page", func() {
+				Expect(res.Code).To(Equal(http.StatusOK))
+				body := res.Body.String()
+				Expect(body).To(Equal(string(indexHtml)))
+			})
 
-			res := httptest.NewRecorder()
-			handler.GetMeta(res, req)
-
-			headers := res.Header()
-			Expect(headers.Get("Location")).To(Equal("https://index-redirect"))
+			It("/index.html serves the static index page", func() {
+				Expect(res.Code).To(Equal(http.StatusOK))
+				body := res.Body.String()
+				Expect(body).To(Equal(string(indexHtml)))
+			})
 		})
 	})
+	
 
 	Describe("GetMeta", func() {
 		JustBeforeEach(func() {

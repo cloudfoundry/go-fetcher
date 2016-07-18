@@ -1,0 +1,57 @@
+<html>
+	<head>
+		<title>code.cloudfoundry.org</title>
+		<style>
+			div {padding: 20px;}
+			body {font-family: Tahoma, Geneva, sans-serif; color: #454645;}
+			h1 {color: #489FD8}
+			.btn {
+				display: inline-block;
+				padding: 6px 12px;
+				font-size: 14px;
+				font-weight: 400;
+				line-height: 2em;
+				text-align: center;
+				white-space: nowrap;
+				vertical-align: middle;
+				touch-action: manipulation;
+				cursor: pointer;
+				-webkit-user-select: none;
+				-moz-user-select: none;
+				-ms-user-select: none;
+				user-select: none;
+				background-image: none;
+				border: 1px solid transparent;
+				border-radius: 4px;
+				text-decoration: none;
+			}
+			.btn-primary {
+				color: #FFF;
+				background-color: #489FD8;
+				border-color: #489FD8;
+			}
+			.btn-primary:hover {
+				color: #FFF;
+				background-color: #1f6593;
+				border-color: #1f6593;
+			}
+			.btn-primary:active {
+				color: #FFF;
+				background-color: #123a54;
+				border-color: #123a54;
+			}
+		</style>
+	</head>
+	<body>
+		<div><h1>Welcome to code.cloudfoundry.org!</h1></div>
+		<div>This is a <i>go get</i> routing service which allows packages from multiple github organizations to appear to be centralized in one location. This also allows the packages to be moved to other locations without breaking imports.</div>
+		<div>This service tracks the packages from the following GitHub organizations:
+			<ul>
+				<li>cloudfoundry</li>
+				<li>cloudfoundry-incubator</li>
+				<li>cloudfoundry-attic</li>
+			</ul>
+		</div>
+		<div><a href="https://github.com/cloudfoundry/go-fetcher" class="btn btn-primary">View on GitHub</a></div>
+	</body>
+</html>

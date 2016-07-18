@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -36,8 +37,10 @@ func (h *Handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 	// Handle index requests (/, /index.htm, index.html)
 	for _, path := range []string{"/", "/index.htm", "/index.html"} {
 		if request.URL.Path == path {
-			logger.Debug("redirect.index", lager.Data{"location": request.URL.Path, "destination": h.config.IndexRedirect})
-			http.Redirect(writer, request, h.config.IndexRedirect, http.StatusFound)
+			logger.Debug("index-page", lager.Data{"location": request.URL.Path})
+			indexHtmlPath := os.Getenv("ROOT_DIR") + "/public/index.html"
+			http.ServeFile(writer, request, indexHtmlPath)
+		    return
 		}
 	}
 
