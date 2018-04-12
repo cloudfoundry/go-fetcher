@@ -30,6 +30,9 @@ var _ = Describe("Generate Application Templates", func() {
 		os.Unsetenv("ROOT_DIR")
 		os.Unsetenv("SERVICES")
 		os.Unsetenv("GITHUB_APIKEY")
+		os.Unsetenv("INSTANCES")
+		os.Unsetenv("MEMORY")
+		os.Unsetenv("DISK_QUOTA")
 	})
 
 	BeforeEach(func() {
@@ -37,6 +40,9 @@ var _ = Describe("Generate Application Templates", func() {
 		os.Setenv("DOMAIN", "cfapps.io")
 		os.Setenv("SERVICES", "code-acceptance-papertrail")
 		os.Setenv("GITHUB_APIKEY", "some-key-key")
+		os.Setenv("INSTANCES", "1")
+		os.Setenv("MEMORY", "512M")
+		os.Setenv("DISK_QUOTA", "512M")
 
 		absPath, err := filepath.Abs("..")
 		Expect(err).NotTo(HaveOccurred())
@@ -77,6 +83,9 @@ var _ = Describe("Generate Application Templates", func() {
 			os.Unsetenv("APP_NAME")
 			os.Unsetenv("DOMAIN")
 			os.Unsetenv("ROOT_DIR")
+			os.Unsetenv("INSTANCES")
+			os.Unsetenv("MEMORY")
+			os.Unsetenv("DISK_QUOTA")
 		})
 
 		It("should generate the application manifest", func() {

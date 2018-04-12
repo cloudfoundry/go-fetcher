@@ -1,6 +1,11 @@
 ---
-application:
+applications:
   - name: {{.appName}}
+    memory: {{.memory}}
+    instances: {{.instances}}
+    disk_quota: {{.disk_quota}}
+    routes:
+    - route: {{.route}}
 env:
   GOPACKAGENAME: github.com/cloudfoundry/go-fetcher/cmd/go-fetcher
   GOVERSION: go1.6
