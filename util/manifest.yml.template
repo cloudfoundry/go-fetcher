@@ -8,7 +8,7 @@ applications:
     - route: {{.route}}
 env:
   GOPACKAGENAME: github.com/cloudfoundry/go-fetcher/cmd/go-fetcher
-  GOVERSION: go1.6
+  GOVERSION: go1.10
   CONFIG: config.json
 {{ if .services }}services:{{ end }}
 {{ range .services }}- {{ . }}
