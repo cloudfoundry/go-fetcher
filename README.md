@@ -23,7 +23,9 @@ go get github.com/cloudfoundry/go-fetcher
 
 We are using [Ginkgo](https://github.com/onsi/ginkgo) to run tests. 
 
-Be sure to install [protobuf](github.com/golang/protobuf/proto) with `go get github.com/golang/protobuf/proto`.
+Be sure to install [counterfeiter](https://github.com/maxbrunsfeld/counterfeiter) with `go get github.com/maxbrunsfeld/counterfeiter/v6`.
+
+Be sure to install [protobuf](https://github.com/golang/protobuf/proto) with `go get github.com/golang/protobuf/proto`.
 
 Run `ginkgo` from the root of the repository to run all tests.
 
@@ -73,7 +75,7 @@ application:
   - name: example
 env:
   GOPACKAGENAME: github.com/cloudfoundry/go-fetcher/cmd/go-fetcher
-  GOVERSION: go1.6
+  GOVERSION: go1.13
   CONFIG: config.json
 END
 ```

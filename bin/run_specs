@@ -8,7 +8,7 @@ my_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 base_dir="$( cd "${my_dir}/.." && pwd )"
 
 pushd "${base_dir}" > /dev/null
-  ginkgo \
+  go run github.com/onsi/ginkgo/ginkgo \
     -p \
     -r \
     -race \
