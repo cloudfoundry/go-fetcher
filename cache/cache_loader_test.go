@@ -31,7 +31,7 @@ var _ = Describe("CacheLoader", func() {
 		cacheLogger := lagertest.NewTestLogger("cache")
 		locCache = cache.NewLocationCache(cacheLogger, clock.NewClock())
 		logger := lagertest.NewTestLogger("cache-loader")
-		cacheLoader = cache.NewCacheLoader(logger, "http://example.com", []string{"org1", "org2"}, locCache, fakeRepoService, fakeClock)
+		cacheLoader = cache.NewCacheLoader(logger, []string{"org1", "org2"}, locCache, fakeRepoService, fakeClock)
 		fakeRepoService.ListByOrgReturns(nil, &github.Response{}, nil)
 	})
 

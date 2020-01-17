@@ -92,7 +92,10 @@ func main() {
 	httpServer := http_server.New(":"+port, http.DefaultServeMux)
 	cacheLoader := cache.NewCacheLoader(
 		logger.Session("cache-loader"),
-		config.GithubURL, config.OrgList, locationCache, client.Repositories, clock,
+		config.OrgList,
+		locationCache,
+		client.Repositories,
+		clock,
 	)
 
 	members := grouper.Members{

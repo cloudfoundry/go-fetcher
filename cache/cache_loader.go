@@ -15,7 +15,6 @@ const CacheUpdateInterval = 10 * time.Minute
 
 type cacheLoader struct {
 	logger        lager.Logger
-	githubURL     string
 	orgs          []string
 	locationCache *LocationCache
 	repoService   RepositoriesService
@@ -27,10 +26,9 @@ type RepositoriesService interface {
 	ListByOrg(ctx context.Context, org string, opt *github.RepositoryListByOrgOptions) ([]*github.Repository, *github.Response, error)
 }
 
-func NewCacheLoader(logger lager.Logger, githubURL string, orgs []string, locationCache *LocationCache, repoService RepositoriesService, clock clock.Clock) ifrit.Runner {
+func NewCacheLoader(logger lager.Logger, orgs []string, locationCache *LocationCache, repoService RepositoriesService, clock clock.Clock) ifrit.Runner {
 	return &cacheLoader{
 		logger:        logger,
-		githubURL:     githubURL,
 		orgs:          orgs,
 		locationCache: locationCache,
 		repoService:   repoService,
