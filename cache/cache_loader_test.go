@@ -38,7 +38,7 @@ var _ = Describe("CacheLoader", func() {
 	It("queries github before becoming ready", func() {
 		doneCh := make(chan struct{})
 
-		fakeRepoService.ListByOrgStub = func(org string, opt *github.RepositoryListByOrgOptions) ([]*github.Repository, *github.Response, error) {
+		fakeRepoService.ListByOrgStub = func(_ context.Context, org string, opt *github.RepositoryListByOrgOptions) ([]*github.Repository, *github.Response, error) {
 			<-doneCh
 			return nil, &github.Response{}, nil
 		}
@@ -58,15 +58,15 @@ var _ = Describe("CacheLoader", func() {
 	It("requests all repos for each org", func() {
 		ifrit.Invoke(cacheLoader)
 
-		org, _ := fakeRepoService.ListByOrgArgsForCall(0)
+		_, org, _ := fakeRepoService.ListByOrgArgsForCall(0)
 		Expect(org).To(Equal("org2"))
 
-		org, _ = fakeRepoService.ListByOrgArgsForCall(1)
+		_, org, _ = fakeRepoService.ListByOrgArgsForCall(1)
 		Expect(org).To(Equal("org1"))
 	})
 
 	It("stores the repos in the cache", func() {
-		fakeRepoService.ListByOrgStub = func(org string, _ *github.RepositoryListByOrgOptions) ([]*github.Repository, *github.Response, error) {
+		fakeRepoService.ListByOrgStub = func(_ context.Context, org string, _ *github.RepositoryListByOrgOptions) ([]*github.Repository, *github.Response, error) {
 			if org == "org1" {
 				name := "repo1"
 				url := "http://example.com/org1/repo1"
@@ -94,7 +94,7 @@ var _ = Describe("CacheLoader", func() {
 
 	It("follows the NextPage link in paginated results", func() {
 		nextPage := 0
-		fakeRepoService.ListByOrgStub = func(org string, opt *github.RepositoryListByOrgOptions) ([]*github.Repository, *github.Response, error) {
+		fakeRepoService.ListByOrgStub = func(_ context.Context, org string, opt *github.RepositoryListByOrgOptions) ([]*github.Repository, *github.Response, error) {
 			if nextPage == 3 {
 				nextPage = 0 // 0 signals no more pages
 			} else {
@@ -129,7 +129,7 @@ var _ = Describe("CacheLoader", func() {
 	})
 
 	It("Prefers the first org for each repo", func() {
-		fakeRepoService.ListByOrgStub = func(org string, _ *github.RepositoryListByOrgOptions) ([]*github.Repository, *github.Response, error) {
+		fakeRepoService.ListByOrgStub = func(_ context.Context, org string, _ *github.RepositoryListByOrgOptions) ([]*github.Repository, *github.Response, error) {
 			if org == "org1" {
 				name := "repo1"
 				url := "http://example.com/org1/repo1"
@@ -152,7 +152,7 @@ var _ = Describe("CacheLoader", func() {
 	})
 
 	It("Forgets deleted repos when a new location cache is generated", func() {
-		fakeRepoService.ListByOrgStub = func(org string, _ *github.RepositoryListByOrgOptions) ([]*github.Repository, *github.Response, error) {
+		fakeRepoService.ListByOrgStub = func(_ context.Context, org string, _ *github.RepositoryListByOrgOptions) ([]*github.Repository, *github.Response, error) {
 			if org == "org1" {
 				name := "first-repo"
 				url := "http://example.com/org1/first-repo"
@@ -171,7 +171,7 @@ var _ = Describe("CacheLoader", func() {
 		_, firstFoundInCache := locCache.Lookup("first-repo")
 		Expect(firstFoundInCache).To(BeTrue())
 
-		fakeRepoService.ListByOrgStub = func(org string, _ *github.RepositoryListByOrgOptions) ([]*github.Repository, *github.Response, error) {
+		fakeRepoService.ListByOrgStub = func(_ context.Context, org string, _ *github.RepositoryListByOrgOptions) ([]*github.Repository, *github.Response, error) {
 			if org == "org1" {
 				name := "second-repo"
 				url := "http://example.com/org1/second-repo"

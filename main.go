@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 
 	"golang.org/x/oauth2"
 
@@ -82,7 +83,7 @@ func main() {
 	}
 
 	client := github.NewClient(tc)
-	githubURL, err := url.Parse(config.GithubURL)
+	githubURL, err := url.Parse(fmt.Sprintf("%s/", strings.TrimSuffix(config.GithubURL, "/")))
 	if err != nil {
 		log.Fatal(err)
 	}

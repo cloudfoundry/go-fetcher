@@ -24,7 +24,7 @@ type cacheLoader struct {
 
 //go:generate counterfeiter -o fakes/fake_repositories_service.go . RepositoriesService
 type RepositoriesService interface {
-	ListByOrg(org string, opt *github.RepositoryListByOrgOptions) ([]*github.Repository, *github.Response, error)
+	ListByOrg(ctx context.Context, org string, opt *github.RepositoryListByOrgOptions) ([]*github.Repository, *github.Response, error)
 }
 
 func NewCacheLoader(logger lager.Logger, githubURL string, orgs []string, locationCache *LocationCache, repoService RepositoriesService, clock clock.Clock) ifrit.Runner {
@@ -88,7 +88,7 @@ func (c *cacheLoader) updateCache(logger lager.Logger) error {
 
 		for {
 			logger.Info("fetching-page", lager.Data{"org": org, "page": opt.Page})
-			repos, resp, err := c.repoService.ListByOrg(org, opt)
+			repos, resp, err := c.repoService.ListByOrg(context.Background(), org, opt)
 			if err != nil {
 				logger.Error("failed-fetching-page", err, lager.Data{"org": org, "page": opt.Page})
 				return err
