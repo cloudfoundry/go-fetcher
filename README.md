@@ -5,31 +5,41 @@ packages from multiple locations to appear to be centralized in one location.
 This also allows the packages to be moved to other locations without breaking
 imports.
 
-## Building
+## Development
 
-In order to build the package, the following dependencies must be met:
-
-* Go should be installed and in the `PATH`
-* `GOPATH` should be set as described [here](http://golang.org/doc/code.html)
-* Ensure that `$GOPATH/bin` is in your `PATH`
-  
-To build the Go binary:
+First, be sure you [install Go](https://golang.org/doc/install). Then clone
+the repository:
 
 ```
-go get github.com/cloudfoundry/go-fetcher
+git clone https://github.com/cloudfoundry/go-fetcher.git
+cd go-fetcher/
 ```
 
-### Running Tests
+We are using [Ginkgo](https://github.com/onsi/ginkgo) to run tests. You may
+use the `run_specs` command:
 
-We are using [Ginkgo](https://github.com/onsi/ginkgo) to run tests. 
+```
+./bin/run_specs
+```
 
-Be sure to install [counterfeiter](https://github.com/maxbrunsfeld/counterfeiter) with `go get github.com/maxbrunsfeld/counterfeiter/v6`.
+Some environment variables and [configuration](#configuration) are required to run. For local testing, you may use the `run_local` command and point your browser to [localhost:8800](http://localhost:8800):
 
-Run `ginkgo` from the root of the repository to run all tests.
+```
+./bin/run_local
+```
 
-## Configuring
+We are using [counterfeiter](https://github.com/maxbrunsfeld/counterfeiter) to
+generate fakes. If you are changing interfaces, you can rebuild fakes with the
+following:
 
-You will need to create a configuration for `go-fetcher`:
+```
+go get github.com/maxbrunsfeld/counterfeiter/v6
+go generate ./...
+```
+
+## Configuration
+
+See the following for an example of what configuration should look like:
 
 ```
 cat > config.json << END
@@ -54,16 +64,7 @@ END
 * The value of "OrgList" is a list of `go get` compatible sites that are searched in order.
 * The value of "Overrides" is a dictionary of packages which should not use the normal search path.
 
-
-## Running locally
-
-The `go-fetcher` program expects environment variables to be set which indicate the port to listen on and the name of the configuration file.
-
-```
-./generate_local && PORT=8800 CONFIG="config.json" go run main.go
-```
-
-# Deploying to Cloud Foundry
+## Deploying to Cloud Foundry
 
 Deploying to Cloud Foundry is straight forward, but requires you to do so from the checked out repository so that `cf` can recognize and upload the package. You will need to create a `manifest.yml` to accompany your `config.json`:
 
