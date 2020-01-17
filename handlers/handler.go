@@ -9,7 +9,7 @@ import (
 
 	"github.com/cloudfoundry/go-fetcher/cache"
 	"github.com/cloudfoundry/go-fetcher/config"
-	"github.com/pivotal-golang/lager"
+	"code.cloudfoundry.org/lager"
 )
 
 type Handler struct {

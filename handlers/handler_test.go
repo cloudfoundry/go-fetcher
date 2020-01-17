@@ -11,8 +11,8 @@ import (
 	"github.com/cloudfoundry/go-fetcher/handlers"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/pivotal-golang/clock"
-	"github.com/pivotal-golang/lager/lagertest"
+	"code.cloudfoundry.org/clock"
+	"code.cloudfoundry.org/lager/lagertest"
 )
 
 var _ = Describe("Handler", func() {

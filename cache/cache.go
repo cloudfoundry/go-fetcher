@@ -3,8 +3,8 @@ package cache
 import (
 	"time"
 
-	"github.com/pivotal-golang/clock"
-	"github.com/pivotal-golang/lager"
+	"code.cloudfoundry.org/clock"
+	"code.cloudfoundry.org/lager"
 )
 
 type cacheEntry struct {

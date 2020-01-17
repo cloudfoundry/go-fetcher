@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/pivotal-golang/lager"
+	"code.cloudfoundry.org/lager"
 )
 
 const (

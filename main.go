@@ -20,8 +20,8 @@ import (
 	"github.com/tedsuo/ifrit/http_server"
 	"github.com/tedsuo/ifrit/sigmon"
 
-	"github.com/pivotal-golang/clock"
-	"github.com/pivotal-golang/lager"
+	"code.cloudfoundry.org/clock"
+	"code.cloudfoundry.org/lager"
 )
 
 var generateConfig = flag.Bool(

@@ -4,8 +4,8 @@ import (
 	"time"
 
 	"github.com/cloudfoundry/go-fetcher/cache"
-	"github.com/pivotal-golang/clock/fakeclock"
-	"github.com/pivotal-golang/lager/lagertest"
+	"code.cloudfoundry.org/clock/fakeclock"
+	"code.cloudfoundry.org/lager/lagertest"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

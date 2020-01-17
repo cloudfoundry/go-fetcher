@@ -1,12 +1,13 @@
 package cache
 
 import (
+	"context"
 	"os"
 	"time"
 
 	"github.com/google/go-github/github"
-	"github.com/pivotal-golang/clock"
-	"github.com/pivotal-golang/lager"
+	"code.cloudfoundry.org/clock"
+	"code.cloudfoundry.org/lager"
 	"github.com/tedsuo/ifrit"
 )
 
