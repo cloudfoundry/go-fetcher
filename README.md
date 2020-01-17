@@ -25,8 +25,6 @@ We are using [Ginkgo](https://github.com/onsi/ginkgo) to run tests.
 
 Be sure to install [counterfeiter](https://github.com/maxbrunsfeld/counterfeiter) with `go get github.com/maxbrunsfeld/counterfeiter/v6`.
 
-Be sure to install [protobuf](https://github.com/golang/protobuf/proto) with `go get github.com/golang/protobuf/proto`.
-
 Run `ginkgo` from the root of the repository to run all tests.
 
 ## Configuring
