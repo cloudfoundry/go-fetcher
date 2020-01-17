@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strconv"
 
 	"github.com/cloudfoundry/go-fetcher/config"
@@ -65,11 +64,7 @@ var _ = Describe("Import Path Redirect Service", func() {
 
 		os.Setenv("PORT", port)
 
-		absPath, err := filepath.Abs(".")
-		Expect(err).NotTo(HaveOccurred())
-		os.Setenv("ROOT_DIR", absPath)
-
-		configFile = fmt.Sprintf(os.Getenv("ROOT_DIR")+"/config-%d.json", GinkgoParallelNode())
+		configFile = fmt.Sprintf("config-%d.json", GinkgoParallelNode())
 		conf = &config.Config{
 			LogLevel:         "debug",
 			ImportPrefix:     "the.canonical.import.path",
@@ -100,7 +95,6 @@ var _ = Describe("Import Path Redirect Service", func() {
 		os.Unsetenv("APP_NAME")
 		os.Unsetenv("DOMAIN")
 		os.Unsetenv("PORT")
-		os.Unsetenv("ROOT_DIR")
 		Expect(err).NotTo(HaveOccurred())
 	})
 

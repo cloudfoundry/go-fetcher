@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path/filepath"
 )
 
 var _ = Describe("Generate Application Templates", func() {
@@ -27,7 +26,6 @@ var _ = Describe("Generate Application Templates", func() {
 
 		os.Unsetenv("APP_NAME")
 		os.Unsetenv("DOMAIN")
-		os.Unsetenv("ROOT_DIR")
 		os.Unsetenv("SERVICES")
 		os.Unsetenv("GITHUB_APIKEY")
 		os.Unsetenv("INSTANCES")
@@ -44,17 +42,13 @@ var _ = Describe("Generate Application Templates", func() {
 		os.Setenv("MEMORY", "512M")
 		os.Setenv("DISK_QUOTA", "512M")
 
-		absPath, err := filepath.Abs("..")
-		Expect(err).NotTo(HaveOccurred())
-		os.Setenv("ROOT_DIR", absPath)
-
 		manifestTemplateFile = "manifest.yml.template"
-		manifestTargetFile = fmt.Sprintf("../manifest-%d.yml", GinkgoParallelNode())
+		manifestTargetFile = fmt.Sprintf("manifest-%d.yml", GinkgoParallelNode())
 		err = util.GenerateManifest(manifestTemplateFile, manifestTargetFile)
 		Expect(err).NotTo(HaveOccurred())
 
 		configTemplateFile = "config.json.template"
-		configTargetFile = fmt.Sprintf("../config-%d.json", GinkgoParallelNode())
+		configTargetFile = fmt.Sprintf("config-%d.json", GinkgoParallelNode())
 		err = util.GenerateConfig(configTemplateFile, configTargetFile)
 		Expect(err).NotTo(HaveOccurred())
 	})
@@ -82,7 +76,6 @@ var _ = Describe("Generate Application Templates", func() {
 		JustBeforeEach(func() {
 			os.Unsetenv("APP_NAME")
 			os.Unsetenv("DOMAIN")
-			os.Unsetenv("ROOT_DIR")
 			os.Unsetenv("INSTANCES")
 			os.Unsetenv("MEMORY")
 			os.Unsetenv("DISK_QUOTA")

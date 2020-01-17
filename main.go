@@ -37,15 +37,15 @@ func main() {
 	flag.Parse()
 
 	if *generateConfig {
-		templateFile := os.Getenv("ROOT_DIR") + "/util/config.json.template"
-		configFile := os.Getenv("ROOT_DIR") + "/config.json"
+		templateFile := "util/config.json.template"
+		configFile := "config.json"
 		err := util.GenerateConfig(templateFile, configFile)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		templateFile = os.Getenv("ROOT_DIR") + "/util/manifest.yml.template"
-		configFile = os.Getenv("ROOT_DIR") + "/manifest.yml"
+		templateFile = "util/manifest.yml.template"
+		configFile = "manifest.yml"
 		err = util.GenerateManifest(templateFile, configFile)
 		if err != nil {
 			log.Fatal(err)
