@@ -111,6 +111,11 @@ func (h *Handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	goImportContent := fmt.Sprintf("%s git %s", h.config.ImportPrefix+"/"+repoName, location)
+	// Go 1.25+ recognizes an optional fourth field naming the subdirectory that
+	// holds the module's go.mod, allowing a module to live below the repo root.
+	if subdir := h.config.Subdirs[repoName]; subdir != "" {
+		goImportContent = fmt.Sprintf("%s %s", goImportContent, subdir)
+	}
 	goImport := fmt.Sprintf("<meta name=\"go-import\" content=\"%s\">", goImportContent)
 	logger.Debug("meta.go-import", lager.Data{"content": goImportContent})
 	if _, err := fmt.Fprint(writer, goImport); err != nil {

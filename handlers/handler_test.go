@@ -154,6 +154,28 @@ var _ = Describe("Handler", func() {
 			})
 		})
 
+		Context("when the repo has a configured module subdirectory", func() {
+			BeforeEach(func() {
+				var err error
+				cfg.Subdirs = map[string]string{"repo1": "src/repo1"}
+				handler = handlers.NewHandler(logger, cfg, locationCache)
+
+				locationCache.Add("repo1", fmt.Sprintf("%s/org1/repo1", cfg.GithubURL))
+				req, err = http.NewRequest("GET", "/repo1", nil)
+				Expect(err).NotTo(HaveOccurred())
+				req.Header.Add("User-Agent", "NoRedirect")
+			})
+
+			It("appends the subdirectory as the fourth go-import field", func() {
+				Expect(res.Code).To(Equal(http.StatusOK))
+
+				resBody := res.Body.String()
+				Expect(resBody).To(ContainSubstring(fmt.Sprintf(
+					"<meta name=\"go-import\" content=\"import-prefix/repo1 git %s/org1/repo1 src/repo1\">",
+					cfg.GithubURL)))
+			})
+		})
+
 		Context("when the request includes a subpackage", func() {
 			BeforeEach(func() {
 				var err error
