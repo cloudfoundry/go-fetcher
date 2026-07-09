@@ -6,13 +6,13 @@ import (
 	"net/http"
 	"net/http/httptest"
 
+	"code.cloudfoundry.org/clock"
+	"code.cloudfoundry.org/lager/lagertest"
 	"github.com/cloudfoundry/go-fetcher/cache"
 	"github.com/cloudfoundry/go-fetcher/config"
 	"github.com/cloudfoundry/go-fetcher/handlers"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"code.cloudfoundry.org/clock"
-	"code.cloudfoundry.org/lager/lagertest"
 )
 
 var _ = Describe("Handler", func() {
@@ -45,13 +45,15 @@ var _ = Describe("Handler", func() {
 		handler = handlers.NewHandler(logger, cfg, locationCache)
 	})
 
-    Describe("Index", func() {
-        var indexHtml []byte
+	Describe("Index", func() {
+		var indexHtml []byte
 
-    	JustBeforeEach(func() {
+		JustBeforeEach(func() {
 			res = httptest.NewRecorder()
 			handler.GetMeta(res, req)
-			indexHtml, _ = ioutil.ReadFile(cfg.IndexPath)
+			var readErr error
+			indexHtml, readErr = ioutil.ReadFile(cfg.IndexPath)
+			Expect(readErr).NotTo(HaveOccurred())
 		})
 
 		Context("when a default URL is requested", func() {
@@ -80,7 +82,6 @@ var _ = Describe("Handler", func() {
 			})
 		})
 	})
-	
 
 	Describe("GetMeta", func() {
 		JustBeforeEach(func() {

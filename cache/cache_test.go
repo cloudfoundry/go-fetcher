@@ -3,9 +3,9 @@ package cache_test
 import (
 	"time"
 
-	"github.com/cloudfoundry/go-fetcher/cache"
 	"code.cloudfoundry.org/clock/fakeclock"
 	"code.cloudfoundry.org/lager/lagertest"
+	"github.com/cloudfoundry/go-fetcher/cache"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
