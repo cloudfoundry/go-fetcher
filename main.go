@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
@@ -79,7 +80,7 @@ func main() {
 		ts := oauth2.StaticTokenSource(
 			&oauth2.Token{AccessToken: config.GithubAPIKey},
 		)
-		tc = oauth2.NewClient(oauth2.NoContext, ts)
+		tc = oauth2.NewClient(context.Background(), ts)
 	}
 
 	client := github.NewClient(tc)
@@ -99,8 +100,8 @@ func main() {
 	)
 
 	members := grouper.Members{
-		{"cache-loader", cacheLoader},
-		{"http-server", httpServer},
+		{Name: "cache-loader", Runner: cacheLoader},
+		{Name: "http-server", Runner: httpServer},
 	}
 
 	group := grouper.NewOrdered(os.Interrupt, members)

@@ -7,8 +7,6 @@ import (
 	"testing"
 )
 
-var err error
-
 func TestUtil(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Util Suite")

@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"time"
 
 	"github.com/cloudfoundry/go-fetcher/config"
 	. "github.com/onsi/ginkgo"
@@ -19,6 +20,10 @@ import (
 	"github.com/onsi/gomega/ghttp"
 )
 
+// NOTE: os.Setenv/os.Unsetenv errors are intentionally ignored in these tests;
+// this is removed once the suite moves to Ginkgo v2's GinkgoT().Setenv helper.
+//
+//nolint:errcheck
 var _ = Describe("Import Path Redirect Service", func() {
 	var (
 		port             string
@@ -83,7 +88,9 @@ var _ = Describe("Import Path Redirect Service", func() {
 		session, err = gexec.Start(exec.Command(goFetchBinary), GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 
-		Eventually(session).Should(gbytes.Say("go-fetcher.started"))
+		// Startup includes loading the location cache from GitHub; under -race
+		// and parallel package runs this can exceed the 1s default, so allow more time.
+		Eventually(session, 20*time.Second).Should(gbytes.Say("go-fetcher.started"))
 	})
 
 	AfterEach(func() {
@@ -107,7 +114,7 @@ var _ = Describe("Import Path Redirect Service", func() {
 
 			res, err := client.Do(req)
 			Expect(err).NotTo(HaveOccurred())
-			defer res.Body.Close()
+			defer func() { _ = res.Body.Close() }()
 
 			body, err := ioutil.ReadAll(res.Body)
 			Expect(err).NotTo(HaveOccurred())
@@ -194,7 +201,7 @@ var _ = Describe("Import Path Redirect Service", func() {
 
 				res, err := client.Do(req)
 				Expect(err).NotTo(HaveOccurred())
-				defer res.Body.Close()
+				defer func() { _ = res.Body.Close() }()
 
 				var body []byte
 				body, err = ioutil.ReadAll(res.Body)

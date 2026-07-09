@@ -8,45 +8,45 @@ import (
 )
 
 func GenerateManifest(templatePath, targetPath string) error {
-        t, err := template.ParseFiles(templatePath)
-        if err != nil {
-                return err
-        }
+	t, err := template.ParseFiles(templatePath)
+	if err != nil {
+		return err
+	}
 
-        appName := os.Getenv("APP_NAME")
-        if appName == "" {
-                return fmt.Errorf("APP_NAME is missing")
-        }
+	appName := os.Getenv("APP_NAME")
+	if appName == "" {
+		return fmt.Errorf("APP_NAME is missing")
+	}
 
-        domain := os.Getenv("DOMAIN")
-        if domain == "" {
-                return fmt.Errorf("DOMAIN is missing")
-        }
+	domain := os.Getenv("DOMAIN")
+	if domain == "" {
+		return fmt.Errorf("DOMAIN is missing")
+	}
 
-        route := appName + "." + domain
+	route := appName + "." + domain
 
-        services := os.Getenv("SERVICES")
-        serviceNames := strings.Split(services, ",")
-        if len(services) == 0 {
-                serviceNames = nil
-        }
+	services := os.Getenv("SERVICES")
+	serviceNames := strings.Split(services, ",")
+	if len(services) == 0 {
+		serviceNames = nil
+	}
 
-        instances := os.Getenv("INSTANCES")
-        if instances == "" {
-                instances = "1"
-        }
+	instances := os.Getenv("INSTANCES")
+	if instances == "" {
+		instances = "1"
+	}
 
-        memory := os.Getenv("MEMORY")
-        if memory == "" {
-                memory = "512M"
-        }
+	memory := os.Getenv("MEMORY")
+	if memory == "" {
+		memory = "512M"
+	}
 
-        disk_quota := os.Getenv("DISK_QUOTA")
-        if disk_quota == "" {
-                disk_quota = "512M"
-        }
+	disk_quota := os.Getenv("DISK_QUOTA")
+	if disk_quota == "" {
+		disk_quota = "512M"
+	}
 
-        return generateActual(t, targetPath, map[string]interface{}{"appName": appName, "services": serviceNames, "route": route, "memory": memory, "instances": instances, "disk_quota": disk_quota})
+	return generateActual(t, targetPath, map[string]interface{}{"appName": appName, "services": serviceNames, "route": route, "memory": memory, "instances": instances, "disk_quota": disk_quota})
 }
 
 func GenerateConfig(templatePath, targetPath string) error {

@@ -10,6 +10,10 @@ import (
 	"os"
 )
 
+// NOTE: os.Setenv/os.Unsetenv errors are intentionally ignored in these tests;
+// this is removed once the suite moves to Ginkgo v2's GinkgoT().Setenv helper.
+//
+//nolint:errcheck
 var _ = Describe("Generate Application Templates", func() {
 
 	var (

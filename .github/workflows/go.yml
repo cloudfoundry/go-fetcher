@@ -1,0 +1,28 @@
+name: go
+on: [ push, pull_request ]
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v6
+        with:
+          # This module's go.mod still declares go 1.13; golangci-lint requires a
+          # modern toolchain, so pin to the current stable release rather than
+          # go-version-file until the module is modernized.
+          go-version: stable
+      - uses: golangci/golangci-lint-action@v9
+
+  test-unit:
+    name: test-unit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v6
+        with:
+          go-version: stable
+      - run: ./bin/run_specs

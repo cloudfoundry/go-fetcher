@@ -5,12 +5,12 @@ import (
 	"errors"
 	"time"
 
-	"github.com/cloudfoundry/go-fetcher/cache"
-	"github.com/cloudfoundry/go-fetcher/cache/fakes"
-	"github.com/google/go-github/github"
 	"code.cloudfoundry.org/clock"
 	"code.cloudfoundry.org/clock/fakeclock"
 	"code.cloudfoundry.org/lager/lagertest"
+	"github.com/cloudfoundry/go-fetcher/cache"
+	"github.com/cloudfoundry/go-fetcher/cache/fakes"
+	"github.com/google/go-github/github"
 	"github.com/tedsuo/ifrit"
 
 	. "github.com/onsi/ginkgo"

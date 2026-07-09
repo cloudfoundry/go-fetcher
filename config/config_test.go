@@ -1,7 +1,6 @@
 package config_test
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 
@@ -23,12 +22,12 @@ var _ = Describe("Load Configuration", func() {
 		tmpDir, err = ioutil.TempDir("", "")
 		Expect(err).NotTo(HaveOccurred())
 
-		jsonContent := []byte(fmt.Sprintf(` {
+		jsonContent := []byte(` {
 				"importPrefix": "test",
 				"orgList": ["test_org"],
 				"NoRedirectAgents": ["test_agent"],
 				"IndexPath": "some_relative/path"
-		}`))
+		}`)
 
 		err = ioutil.WriteFile(tmpDir+"/config.json", jsonContent, 0644)
 		Expect(err).NotTo(HaveOccurred())

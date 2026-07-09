@@ -5,9 +5,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/google/go-github/github"
 	"code.cloudfoundry.org/clock"
 	"code.cloudfoundry.org/lager"
+	"github.com/google/go-github/github"
 	"github.com/tedsuo/ifrit"
 )
 
@@ -66,9 +66,9 @@ func (c *cacheLoader) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 		case signal := <-signals:
 			logger.Info("signaled", lager.Data{"signal": signal.String})
 			timer.Stop()
+			return nil
 		}
 	}
-	return nil
 }
 
 func (c *cacheLoader) updateCache(logger lager.Logger) error {
@@ -105,7 +105,7 @@ func (c *cacheLoader) updateCache(logger lager.Logger) error {
 			if resp.NextPage == 0 {
 				break
 			}
-			opt.ListOptions.Page = resp.NextPage
+			opt.Page = resp.NextPage
 		}
 	}
 	logger.Info("finished-fetching-orgs", lager.Data{"orgs": c.orgs})
