@@ -95,7 +95,11 @@ func (h *Handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 				h.config.ImportPrefix, repoPath); err != nil {
 				logger.Error("redirect.meta", err)
 			}
+		} else {
+			logger.Debug("redirect.http", lager.Data{"location": location})
+			http.Redirect(writer, request, location, http.StatusFound)
 		}
+
 		return
 	}
 
