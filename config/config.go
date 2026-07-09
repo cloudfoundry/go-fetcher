@@ -16,11 +16,16 @@ const (
 )
 
 type Config struct {
-	LogLevel             string
-	ImportPrefix         string
-	OrgList              []string
-	NoRedirectAgents     []string
-	Overrides            map[string]string
+	LogLevel         string
+	ImportPrefix     string
+	OrgList          []string
+	NoRedirectAgents []string
+	Overrides        map[string]string
+	// Subdirs maps a repo name to the directory within its repository that
+	// contains the Go module's root (its go.mod). When set, it is emitted as
+	// the optional fourth field of the go-import meta tag, which the go command
+	// recognizes as of Go 1.25 to fetch a module from a subdirectory.
+	Subdirs              map[string]string
 	GithubAPIKey         string
 	GithubStatusEndpoint string
 	GithubURL            string
