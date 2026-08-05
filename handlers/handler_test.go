@@ -31,11 +31,10 @@ var _ = Describe("Handler", func() {
 			OrgList:          []string{"org1", "org2"},
 			ImportPrefix:     "import-prefix",
 			NoRedirectAgents: []string{"NoRedirect"},
-			Overrides: map[string]string{
-				"overridden": "http://override.org/other-org/overridden"},
-			GithubURL:    "http://example.com",
-			GithubAPIKey: "fake-github-api-key",
-			IndexPath:    "../public/index.html",
+			Overrides:        map[string]string{"overridden": "https://override.example.com/other-org/overridden"},
+			GithubURL:        "https://example.com",
+			GithubAPIKey:     "fake-github-api-key",
+			IndexPath:        "../public/index.html",
 		}
 
 		logger = lagertest.NewTestLogger("test")
@@ -194,7 +193,7 @@ var _ = Describe("Handler", func() {
 				Expect(res.Code).To(Equal(http.StatusFound))
 
 				headers := res.Header()
-				Expect(headers.Get("Location")).To(Equal("http://override.org/other-org/overridden"))
+				Expect(headers.Get("Location")).To(Equal("https://override.example.com/other-org/overridden"))
 			})
 		})
 	})
