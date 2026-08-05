@@ -73,20 +73,34 @@ func (h *Handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 		logger.Info("served", lager.Data{"duration": fmt.Sprint(time.Since(start)), "location": location})
 	}()
 
-	// do not redirect if the agent is known from the NoRedirect list
-	if !contains(h.config.NoRedirectAgents, request.Header.Get("User-Agent")) {
-		repoPath := strings.TrimLeft(request.URL.Path, "/")
-		// if go-get=1 redirect to godoc.org using an HTML redirect, as expected by go get
-		if request.URL.Query().Get("go-get") == "1" {
+	repoPath := strings.TrimLeft(request.URL.Path, "/")
+
+	if request.URL.Query().Get("go-get") == "1" {
+		// Always emit go-import and go-source meta tags so `go get` can resolve the import path.
+		goImportContent := fmt.Sprintf("%s git %s", h.config.ImportPrefix+"/"+repoName, location)
+		goImport := fmt.Sprintf("<meta name=\"go-import\" content=\"%s\">", goImportContent)
+		logger.Debug("meta.go-import", lager.Data{"content": goImportContent})
+		fmt.Fprintf(writer, goImport)
+
+		goSourceContent := fmt.Sprintf("%s _ %s", h.config.ImportPrefix+"/"+repoName, location)
+		goSource := fmt.Sprintf("<meta name=\"go-source\" content=\"%s\">", goSourceContent)
+		logger.Debug("meta.go-source", lager.Data{"content": goSourceContent})
+		fmt.Fprintf(writer, goSource)
+
+		// Also add a browser redirect to pkg.go.dev for human visitors.
+		if !contains(h.config.NoRedirectAgents, request.Header.Get("User-Agent")) {
 			logger.Debug("redirect.meta", lager.Data{"path": repoPath})
 			fmt.Fprintf(writer,
-				"<meta http-equiv=\"refresh\" content=\"0; url=https://godoc.org/%s/%s\">",
+				"<meta http-equiv=\"refresh\" content=\"0; url=https://pkg.go.dev/%s/%s\">",
 				h.config.ImportPrefix, repoPath)
-		} else {
-			logger.Debug("redirect.http", lager.Data{"location": location})
-			http.Redirect(writer, request, location, http.StatusFound)
 		}
+		return
+	}
 
+	// do not redirect if the agent is known from the NoRedirect list
+	if !contains(h.config.NoRedirectAgents, request.Header.Get("User-Agent")) {
+		logger.Debug("redirect.http", lager.Data{"location": location})
+		http.Redirect(writer, request, location, http.StatusFound)
 		return
 	}
 

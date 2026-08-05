@@ -116,6 +116,42 @@ var _ = Describe("Handler", func() {
 					Expect(resBody).To(ContainSubstring(fmt.Sprintf("<meta name=\"go-source\" content=\"import-prefix/repo1 _ %s/org1/repo1\">", cfg.GithubURL)))
 				})
 			})
+
+			Context("when go-get=1 is in the query string", func() {
+				BeforeEach(func() {
+					var err error
+					req, err = http.NewRequest("GET", "/repo1?go-get=1", nil)
+					Expect(err).NotTo(HaveOccurred())
+				})
+
+				It("always returns go-import and go-source meta tags", func() {
+					Expect(res.Code).To(Equal(http.StatusOK))
+
+					resBody := res.Body.String()
+					Expect(resBody).To(ContainSubstring(fmt.Sprintf("<meta name=\"go-import\" content=\"import-prefix/repo1 git %s/org1/repo1\">", cfg.GithubURL)))
+					Expect(resBody).To(ContainSubstring(fmt.Sprintf("<meta name=\"go-source\" content=\"import-prefix/repo1 _ %s/org1/repo1\">", cfg.GithubURL)))
+				})
+
+				It("also includes a browser redirect to pkg.go.dev", func() {
+					resBody := res.Body.String()
+					Expect(resBody).To(ContainSubstring("<meta http-equiv=\"refresh\" content=\"0; url=https://pkg.go.dev/import-prefix/repo1\">"))
+				})
+
+				Context("when the user agent is in the NoRedirectAgents list", func() {
+					BeforeEach(func() {
+						req.Header.Add("User-Agent", "NoRedirect")
+					})
+
+					It("returns go-import and go-source meta tags but no browser redirect", func() {
+						Expect(res.Code).To(Equal(http.StatusOK))
+
+						resBody := res.Body.String()
+						Expect(resBody).To(ContainSubstring(fmt.Sprintf("<meta name=\"go-import\" content=\"import-prefix/repo1 git %s/org1/repo1\">", cfg.GithubURL)))
+						Expect(resBody).To(ContainSubstring(fmt.Sprintf("<meta name=\"go-source\" content=\"import-prefix/repo1 _ %s/org1/repo1\">", cfg.GithubURL)))
+						Expect(resBody).NotTo(ContainSubstring("http-equiv=\"refresh\""))
+					})
+				})
+			})
 		})
 
 		Context("when the request includes a subpackage", func() {

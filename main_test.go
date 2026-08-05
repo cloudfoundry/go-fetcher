@@ -186,7 +186,7 @@ var _ = Describe("Import Path Redirect Service", func() {
 		})
 
 		Context("when go-get is set", func() {
-			It("will redirect to godoc.org with an HTML meta tag redirect", func() {
+			It("returns go-import and go-source meta tags and a pkg.go.dev browser redirect", func() {
 				client := &http.Client{}
 
 				req, err := http.NewRequest("GET", "http://:"+port+"/repository-1/test?go-get=1", nil)
@@ -199,8 +199,12 @@ var _ = Describe("Import Path Redirect Service", func() {
 				var body []byte
 				body, err = ioutil.ReadAll(res.Body)
 				Expect(err).NotTo(HaveOccurred())
-				expectedMeta := fmt.Sprintf("<meta http-equiv=\"refresh\" content=\"0; url=https://godoc.org/%s/repository-1/test\">", conf.ImportPrefix)
-				Expect(body).To(ContainSubstring(expectedMeta))
+
+				expectedImport := fmt.Sprintf("<meta name=\"go-import\" content=\"%s/repository-1 git ", conf.ImportPrefix)
+				Expect(body).To(ContainSubstring(expectedImport))
+
+				expectedRedirect := fmt.Sprintf("<meta http-equiv=\"refresh\" content=\"0; url=https://pkg.go.dev/%s/repository-1/test\">", conf.ImportPrefix)
+				Expect(body).To(ContainSubstring(expectedRedirect))
 			})
 		})
 	})
