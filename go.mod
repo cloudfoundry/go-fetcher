@@ -6,7 +6,7 @@ require (
 	code.cloudfoundry.org/clock v1.82.0
 	code.cloudfoundry.org/lager v2.0.0+incompatible
 	github.com/google/go-github v17.0.0+incompatible
-	github.com/maxbrunsfeld/counterfeiter/v6 v6.2.2
+	github.com/maxbrunsfeld/counterfeiter/v6 v6.12.2
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.42.1
 	github.com/tedsuo/ifrit v0.0.0-20260418191334-846868129986
@@ -30,3 +30,5 @@ require (
 	google.golang.org/protobuf v1.36.7 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 )
+
+tool github.com/maxbrunsfeld/counterfeiter/v6
