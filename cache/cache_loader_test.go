@@ -5,12 +5,12 @@ import (
 	"errors"
 	"time"
 
-	"github.com/cloudfoundry/go-fetcher/cache"
-	"github.com/cloudfoundry/go-fetcher/cache/fakes"
-	"github.com/google/go-github/github"
 	"code.cloudfoundry.org/clock"
 	"code.cloudfoundry.org/clock/fakeclock"
 	"code.cloudfoundry.org/lager/lagertest"
+	"github.com/cloudfoundry/go-fetcher/cache"
+	"github.com/cloudfoundry/go-fetcher/cache/fakes"
+	"github.com/google/go-github/github"
 	"github.com/tedsuo/ifrit"
 
 	. "github.com/onsi/ginkgo"
@@ -69,13 +69,13 @@ var _ = Describe("CacheLoader", func() {
 		fakeRepoService.ListByOrgStub = func(_ context.Context, org string, _ *github.RepositoryListByOrgOptions) ([]*github.Repository, *github.Response, error) {
 			if org == "org1" {
 				name := "repo1"
-				url := "http://example.com/org1/repo1"
+				url := "https://example.com/org1/repo1"
 				return []*github.Repository{{Name: &name, HTMLURL: &url}}, &github.Response{}, nil
 			}
 
 			if org == "org2" {
 				name := "repo2"
-				url := "http://example.com/org2/repo2"
+				url := "https://example.com/org2/repo2"
 				return []*github.Repository{{Name: &name, HTMLURL: &url}}, &github.Response{}, nil
 			}
 			return nil, nil, errors.New("not found")
@@ -85,11 +85,11 @@ var _ = Describe("CacheLoader", func() {
 		storedLocation, foundInCache := locCache.Lookup("repo1")
 
 		Expect(foundInCache).To(BeTrue())
-		Expect(storedLocation).To(Equal("http://example.com/org1/repo1"))
+		Expect(storedLocation).To(Equal("https://example.com/org1/repo1"))
 		storedLocation, foundInCache = locCache.Lookup("repo2")
 
 		Expect(foundInCache).To(BeTrue())
-		Expect(storedLocation).To(Equal("http://example.com/org2/repo2"))
+		Expect(storedLocation).To(Equal("https://example.com/org2/repo2"))
 	})
 
 	It("follows the NextPage link in paginated results", func() {
@@ -101,8 +101,8 @@ var _ = Describe("CacheLoader", func() {
 				nextPage++
 			}
 			return []*github.Repository{
-					&github.Repository{},
-					&github.Repository{},
+					{},
+					{},
 				},
 				&github.Response{
 					NextPage: nextPage,
@@ -121,10 +121,10 @@ var _ = Describe("CacheLoader", func() {
 
 		Expect(fakeRepoService.ListByOrgCallCount()).To(Equal(2))
 
-		fakeClock.WaitForWatcherAndIncrement(cache.CacheUpdateInterval)
+		fakeClock.WaitForWatcherAndIncrement(cache.UpdateInterval)
 		Eventually(fakeRepoService.ListByOrgCallCount).Should(Equal(4))
 
-		fakeClock.WaitForWatcherAndIncrement(cache.CacheUpdateInterval)
+		fakeClock.WaitForWatcherAndIncrement(cache.UpdateInterval)
 		Eventually(fakeRepoService.ListByOrgCallCount).Should(Equal(6))
 	})
 
@@ -132,13 +132,13 @@ var _ = Describe("CacheLoader", func() {
 		fakeRepoService.ListByOrgStub = func(_ context.Context, org string, _ *github.RepositoryListByOrgOptions) ([]*github.Repository, *github.Response, error) {
 			if org == "org1" {
 				name := "repo1"
-				url := "http://example.com/org1/repo1"
+				url := "https://example.com/org1/repo1"
 				return []*github.Repository{{Name: &name, HTMLURL: &url}}, &github.Response{}, nil
 			}
 
 			if org == "org2" {
 				name := "repo1"
-				url := "http://example.com/org2/repo1"
+				url := "https://example.com/org2/repo1"
 				return []*github.Repository{{Name: &name, HTMLURL: &url}}, &github.Response{}, nil
 			}
 			return nil, nil, errors.New("not found")
@@ -148,20 +148,20 @@ var _ = Describe("CacheLoader", func() {
 		storedLocation, foundInCache := locCache.Lookup("repo1")
 
 		Expect(foundInCache).To(BeTrue())
-		Expect(storedLocation).To(Equal("http://example.com/org1/repo1"))
+		Expect(storedLocation).To(Equal("https://example.com/org1/repo1"))
 	})
 
 	It("Forgets deleted repos when a new location cache is generated", func() {
 		fakeRepoService.ListByOrgStub = func(_ context.Context, org string, _ *github.RepositoryListByOrgOptions) ([]*github.Repository, *github.Response, error) {
 			if org == "org1" {
 				name := "first-repo"
-				url := "http://example.com/org1/first-repo"
+				url := "https://example.com/org1/first-repo"
 				return []*github.Repository{{Name: &name, HTMLURL: &url}}, &github.Response{}, nil
 			}
 
 			if org == "org2" {
 				name := "repo1"
-				url := "http://example.com/org2/repo1"
+				url := "https://example.com/org2/repo1"
 				return []*github.Repository{{Name: &name, HTMLURL: &url}}, &github.Response{}, nil
 			}
 			return nil, nil, errors.New("not found")
@@ -174,19 +174,19 @@ var _ = Describe("CacheLoader", func() {
 		fakeRepoService.ListByOrgStub = func(_ context.Context, org string, _ *github.RepositoryListByOrgOptions) ([]*github.Repository, *github.Response, error) {
 			if org == "org1" {
 				name := "second-repo"
-				url := "http://example.com/org1/second-repo"
+				url := "https://example.com/org1/second-repo"
 				return []*github.Repository{{Name: &name, HTMLURL: &url}}, &github.Response{}, nil
 			}
 
 			if org == "org2" {
 				name := "repo1"
-				url := "http://example.com/org2/repo1"
+				url := "https://example.com/org2/repo1"
 				return []*github.Repository{{Name: &name, HTMLURL: &url}}, &github.Response{}, nil
 			}
 			return nil, nil, errors.New("not found")
 		}
 
-		fakeClock.WaitForWatcherAndIncrement(cache.CacheUpdateInterval)
+		fakeClock.WaitForWatcherAndIncrement(cache.UpdateInterval)
 		fakeClock.WaitForWatcherAndIncrement(1)
 		_, firstFoundInCache = locCache.Lookup("first-repo")
 		Expect(firstFoundInCache).To(BeFalse())

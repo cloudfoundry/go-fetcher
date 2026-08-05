@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"os/exec"
 	"strconv"
+	"time"
 
 	"github.com/cloudfoundry/go-fetcher/config"
 	. "github.com/onsi/ginkgo"
@@ -19,6 +20,10 @@ import (
 	"github.com/onsi/gomega/ghttp"
 )
 
+// NOTE: os.Setenv/os.Unsetenv errors are intentionally ignored in these tests;
+// this is removed once the suite moves to Ginkgo v2's GinkgoT().Setenv helper.
+//
+//nolint:errcheck
 var _ = Describe("Import Path Redirect Service", func() {
 	var (
 		port             string
@@ -75,7 +80,7 @@ var _ = Describe("Import Path Redirect Service", func() {
 
 		bytes, err := json.Marshal(conf)
 		Expect(err).NotTo(HaveOccurred())
-		err = ioutil.WriteFile(configFile, bytes, 0644)
+		err = os.WriteFile(configFile, bytes, 0644)
 		Expect(err).NotTo(HaveOccurred())
 
 		os.Setenv("CONFIG", configFile)
@@ -83,7 +88,9 @@ var _ = Describe("Import Path Redirect Service", func() {
 		session, err = gexec.Start(exec.Command(goFetchBinary), GinkgoWriter, GinkgoWriter)
 		Expect(err).NotTo(HaveOccurred())
 
-		Eventually(session).Should(gbytes.Say("go-fetcher.started"))
+		// Startup includes loading the location cache from GitHub; under -race
+		// and parallel package runs this can exceed the 1s default, so allow more time.
+		Eventually(session, 20*time.Second).Should(gbytes.Say("go-fetcher.started"))
 	})
 
 	AfterEach(func() {
@@ -101,15 +108,15 @@ var _ = Describe("Import Path Redirect Service", func() {
 	Context("when the user agent is part of the NoRedirectAgents list", func() {
 		It("responds appropriately", func() {
 			client := &http.Client{}
-			req, err := http.NewRequest("GET", "http://:"+port+"/repository-1/something-else/test", nil)
+			req, err := http.NewRequest("GET", fmt.Sprintf("http://:%s/repository-1/something-else/test", port), nil)
 			Expect(err).NotTo(HaveOccurred())
 			req.Header.Set("User-Agent", conf.NoRedirectAgents[0])
 
 			res, err := client.Do(req)
 			Expect(err).NotTo(HaveOccurred())
-			defer res.Body.Close()
+			defer func() { _ = res.Body.Close() }()
 
-			body, err := ioutil.ReadAll(res.Body)
+			body, err := io.ReadAll(res.Body)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(body).To(ContainSubstring(fmt.Sprintf(
 				`<meta name="go-import" content="%s/repository-1 git %s/cloudfoundry/repository-1">`,
@@ -141,7 +148,7 @@ var _ = Describe("Import Path Redirect Service", func() {
 
 			Context("when the repo is in cloudfoundry", func() {
 				It("will redirect to the true cloudfoundry source via HTTP redirects", func() {
-					req, err := http.NewRequest("GET", "http://:"+port+"/repository-2", nil)
+					req, err := http.NewRequest("GET", fmt.Sprintf("http://:%s/repository-2", port), nil)
 					Expect(err).NotTo(HaveOccurred())
 
 					res, err := client.Do(req)
@@ -156,7 +163,7 @@ var _ = Describe("Import Path Redirect Service", func() {
 
 			Context("when the repo is in cloudfoundry-incubator", func() {
 				It("will redirect to the true cloudfoundry-incubator source via HTTP redirects", func() {
-					req, err := http.NewRequest("GET", "http://:"+port+"/repo-in-incubator", nil)
+					req, err := http.NewRequest("GET", fmt.Sprintf("http://:%s/repo-in-incubator", port), nil)
 					Expect(err).NotTo(HaveOccurred())
 
 					res, err := client.Do(req)
@@ -171,7 +178,7 @@ var _ = Describe("Import Path Redirect Service", func() {
 
 			Context("when the repo is in cloudfoundry-attic", func() {
 				It("will redirect to the true cloudfoundry-attic source via HTTP redirects", func() {
-					req, err := http.NewRequest("GET", "http://:"+port+"/repo-in-attic", nil)
+					req, err := http.NewRequest("GET", fmt.Sprintf("http://:%s/repo-in-attic", port), nil)
 					Expect(err).NotTo(HaveOccurred())
 
 					res, err := client.Do(req)
@@ -189,21 +196,21 @@ var _ = Describe("Import Path Redirect Service", func() {
 			It("returns go-import and go-source meta tags and a pkg.go.dev browser redirect", func() {
 				client := &http.Client{}
 
-				req, err := http.NewRequest("GET", "http://:"+port+"/repository-1/test?go-get=1", nil)
+				req, err := http.NewRequest("GET", fmt.Sprintf("http://:%s/repository-1/test?go-get=1", port), nil)
 				Expect(err).NotTo(HaveOccurred())
 
 				res, err := client.Do(req)
 				Expect(err).NotTo(HaveOccurred())
-				defer res.Body.Close()
+				defer func() { _ = res.Body.Close() }()
 
 				var body []byte
-				body, err = ioutil.ReadAll(res.Body)
+				body, err = io.ReadAll(res.Body)
 				Expect(err).NotTo(HaveOccurred())
 
-				expectedImport := fmt.Sprintf("<meta name=\"go-import\" content=\"%s/repository-1 git ", conf.ImportPrefix)
+				expectedImport := fmt.Sprintf(`<meta name="go-import" content="%s/repository-1 git `, conf.ImportPrefix)
 				Expect(body).To(ContainSubstring(expectedImport))
 
-				expectedRedirect := fmt.Sprintf("<meta http-equiv=\"refresh\" content=\"0; url=https://pkg.go.dev/%s/repository-1/test\">", conf.ImportPrefix)
+				expectedRedirect := fmt.Sprintf(`<meta http-equiv="refresh" content="0; url=https://pkg.go.dev/%s/repository-1/test">`, conf.ImportPrefix)
 				Expect(body).To(ContainSubstring(expectedRedirect))
 			})
 		})

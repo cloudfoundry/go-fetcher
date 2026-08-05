@@ -3,13 +3,13 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"path/filepath"
 	"strings"
 	"time"
-	"path/filepath"
 
+	"code.cloudfoundry.org/lager"
 	"github.com/cloudfoundry/go-fetcher/cache"
 	"github.com/cloudfoundry/go-fetcher/config"
-	"code.cloudfoundry.org/lager"
 )
 
 type Handler struct {
@@ -39,12 +39,12 @@ func (h *Handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 		if request.URL.Path == path {
 			logger.Debug("index-page", lager.Data{"location": request.URL.Path})
 			indexHtmlPath, err := filepath.Abs(h.config.IndexPath)
-			
+
 			if err != nil {
-		      logger.Error("index-page", fmt.Errorf("could not get absolute path of IndexPath"))		
+				logger.Error("index-page", fmt.Errorf("could not get absolute path of IndexPath"))
 			}
 			http.ServeFile(writer, request, indexHtmlPath)
-		    return
+			return
 		}
 	}
 
@@ -80,19 +80,21 @@ func (h *Handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 		goImportContent := fmt.Sprintf("%s git %s", h.config.ImportPrefix+"/"+repoName, location)
 		goImport := fmt.Sprintf("<meta name=\"go-import\" content=\"%s\">", goImportContent)
 		logger.Debug("meta.go-import", lager.Data{"content": goImportContent})
-		fmt.Fprintf(writer, goImport)
+		fmt.Fprintf(writer, goImport) //nolint:errcheck,staticcheck
 
 		goSourceContent := fmt.Sprintf("%s _ %s", h.config.ImportPrefix+"/"+repoName, location)
 		goSource := fmt.Sprintf("<meta name=\"go-source\" content=\"%s\">", goSourceContent)
 		logger.Debug("meta.go-source", lager.Data{"content": goSourceContent})
-		fmt.Fprintf(writer, goSource)
+		fmt.Fprintf(writer, goSource) //nolint:errcheck,staticcheck
 
 		// Also add a browser redirect to pkg.go.dev for human visitors.
 		if !contains(h.config.NoRedirectAgents, request.Header.Get("User-Agent")) {
 			logger.Debug("redirect.meta", lager.Data{"path": repoPath})
-			fmt.Fprintf(writer,
+			if _, err := fmt.Fprintf(writer,
 				"<meta http-equiv=\"refresh\" content=\"0; url=https://pkg.go.dev/%s/%s\">",
-				h.config.ImportPrefix, repoPath)
+				h.config.ImportPrefix, repoPath); err != nil {
+				logger.Error("redirect.meta", err)
+			}
 		}
 		return
 	}
@@ -107,12 +109,16 @@ func (h *Handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 	goImportContent := fmt.Sprintf("%s git %s", h.config.ImportPrefix+"/"+repoName, location)
 	goImport := fmt.Sprintf("<meta name=\"go-import\" content=\"%s\">", goImportContent)
 	logger.Debug("meta.go-import", lager.Data{"content": goImportContent})
-	fmt.Fprintf(writer, goImport)
+	if _, err := fmt.Fprint(writer, goImport); err != nil {
+		logger.Error("meta.go-import", err)
+	}
 
 	goSourceContent := fmt.Sprintf("%s _ %s", h.config.ImportPrefix+"/"+repoName, location)
 	goSource := fmt.Sprintf("<meta name=\"go-source\" content=\"%s\">", goSourceContent)
 	logger.Debug("meta.go-source", lager.Data{"content": goSourceContent})
-	fmt.Fprintf(writer, goSource)
+	if _, err := fmt.Fprint(writer, goSource); err != nil {
+		logger.Error("meta.go-source", err)
+	}
 }
 
 func contains(slice []string, object string) bool {

@@ -3,7 +3,7 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"code.cloudfoundry.org/lager"
 )
@@ -45,7 +45,7 @@ func (c *Config) GetLogLevel() lager.LogLevel {
 }
 
 func Parse(configPath string) (*Config, error) {
-	jsonBlob, err := ioutil.ReadFile(configPath)
+	jsonBlob, err := os.ReadFile(configPath)
 
 	if err != nil {
 		return nil, err

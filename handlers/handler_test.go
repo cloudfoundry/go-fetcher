@@ -2,17 +2,17 @@ package handlers_test
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 
+	"code.cloudfoundry.org/clock"
+	"code.cloudfoundry.org/lager/lagertest"
 	"github.com/cloudfoundry/go-fetcher/cache"
 	"github.com/cloudfoundry/go-fetcher/config"
 	"github.com/cloudfoundry/go-fetcher/handlers"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"code.cloudfoundry.org/clock"
-	"code.cloudfoundry.org/lager/lagertest"
 )
 
 var _ = Describe("Handler", func() {
@@ -31,11 +31,10 @@ var _ = Describe("Handler", func() {
 			OrgList:          []string{"org1", "org2"},
 			ImportPrefix:     "import-prefix",
 			NoRedirectAgents: []string{"NoRedirect"},
-			Overrides: map[string]string{
-				"overridden": "http://override.org/other-org/overridden"},
-			GithubURL:    "http://example.com",
-			GithubAPIKey: "somekey-somekey",
-			IndexPath:    "../public/index.html",
+			Overrides:        map[string]string{"overridden": "https://override.example.com/other-org/overridden"},
+			GithubURL:        "https://example.com",
+			GithubAPIKey:     "fake-github-api-key",
+			IndexPath:        "../public/index.html",
 		}
 
 		logger = lagertest.NewTestLogger("test")
@@ -45,13 +44,15 @@ var _ = Describe("Handler", func() {
 		handler = handlers.NewHandler(logger, cfg, locationCache)
 	})
 
-    Describe("Index", func() {
-        var indexHtml []byte
+	Describe("Index", func() {
+		var indexHtml []byte
 
-    	JustBeforeEach(func() {
+		JustBeforeEach(func() {
 			res = httptest.NewRecorder()
 			handler.GetMeta(res, req)
-			indexHtml, _ = ioutil.ReadFile(cfg.IndexPath)
+			var readErr error
+			indexHtml, readErr = os.ReadFile(cfg.IndexPath)
+			Expect(readErr).NotTo(HaveOccurred())
 		})
 
 		Context("when a default URL is requested", func() {
@@ -80,7 +81,6 @@ var _ = Describe("Handler", func() {
 			})
 		})
 	})
-	
 
 	Describe("GetMeta", func() {
 		JustBeforeEach(func() {
@@ -108,7 +108,7 @@ var _ = Describe("Handler", func() {
 					req.Header.Add("User-Agent", "NoRedirect")
 				})
 
-				It("returns the second organiztion in the HTML meta tags,", func() {
+				It("returns the second organization in the HTML meta tags,", func() {
 					Expect(res.Code).To(Equal(http.StatusOK))
 
 					resBody := res.Body.String()
@@ -193,7 +193,7 @@ var _ = Describe("Handler", func() {
 				Expect(res.Code).To(Equal(http.StatusFound))
 
 				headers := res.Header()
-				Expect(headers.Get("Location")).To(Equal("http://override.org/other-org/overridden"))
+				Expect(headers.Get("Location")).To(Equal("https://override.example.com/other-org/overridden"))
 			})
 		})
 	})

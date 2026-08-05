@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
@@ -54,14 +55,14 @@ func main() {
 	}
 
 	configFile := os.Getenv("CONFIG")
-	config, err := config.Parse(configFile)
+	cfg, err := config.Parse(configFile)
 
 	if err != nil {
 		panic("config file error: " + err.Error())
 	}
 
 	logger := lager.NewLogger("go-fetcher")
-	sink := lager.NewReconfigurableSink(lager.NewWriterSink(os.Stdout, lager.DEBUG), config.GetLogLevel())
+	sink := lager.NewReconfigurableSink(lager.NewWriterSink(os.Stdout, lager.DEBUG), cfg.GetLogLevel())
 	logger.RegisterSink(sink)
 
 	port := os.Getenv("PORT")
@@ -69,21 +70,21 @@ func main() {
 		logger.Error("server.failed", fmt.Errorf("$PORT must be set"))
 	}
 
-	clock := clock.NewClock()
-	locationCache := cache.NewLocationCache(logger.Session("cache"), clock)
-	handler := handlers.NewHandler(logger, *config, locationCache)
+	clck := clock.NewClock()
+	locationCache := cache.NewLocationCache(logger.Session("cache"), clck)
+	handler := handlers.NewHandler(logger, *cfg, locationCache)
 	http.HandleFunc("/", handler.GetMeta)
 
 	var tc *http.Client
-	if config.GithubAPIKey != "" {
+	if cfg.GithubAPIKey != "" {
 		ts := oauth2.StaticTokenSource(
-			&oauth2.Token{AccessToken: config.GithubAPIKey},
+			&oauth2.Token{AccessToken: cfg.GithubAPIKey},
 		)
-		tc = oauth2.NewClient(oauth2.NoContext, ts)
+		tc = oauth2.NewClient(context.Background(), ts)
 	}
 
 	client := github.NewClient(tc)
-	githubURL, err := url.Parse(fmt.Sprintf("%s/", strings.TrimSuffix(config.GithubURL, "/")))
+	githubURL, err := url.Parse(fmt.Sprintf("%s/", strings.TrimSuffix(cfg.GithubURL, "/")))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -92,15 +93,15 @@ func main() {
 	httpServer := http_server.New(":"+port, http.DefaultServeMux)
 	cacheLoader := cache.NewCacheLoader(
 		logger.Session("cache-loader"),
-		config.OrgList,
+		cfg.OrgList,
 		locationCache,
 		client.Repositories,
-		clock,
+		clck,
 	)
 
 	members := grouper.Members{
-		{"cache-loader", cacheLoader},
-		{"http-server", httpServer},
+		{Name: "cache-loader", Runner: cacheLoader},
+		{Name: "http-server", Runner: httpServer},
 	}
 
 	group := grouper.NewOrdered(os.Interrupt, members)

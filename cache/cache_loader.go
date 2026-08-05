@@ -5,13 +5,13 @@ import (
 	"os"
 	"time"
 
-	"github.com/google/go-github/github"
 	"code.cloudfoundry.org/clock"
 	"code.cloudfoundry.org/lager"
+	"github.com/google/go-github/github"
 	"github.com/tedsuo/ifrit"
 )
 
-const CacheUpdateInterval = 10 * time.Minute
+const UpdateInterval = 10 * time.Minute
 
 type cacheLoader struct {
 	logger        lager.Logger
@@ -42,11 +42,11 @@ func (c *cacheLoader) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 	// Initialize the cache
 	err := c.updateCache(logger)
 
-	// On starup, fail if there is an error with the initial call to github,
-	// becaue it's more likely to be noticed and there's a higher change the
+	// On startup, fail if there is an error with the initial call to GitHub,
+	// because it's more likely to be noticed and there's a higher change the
 	// problem is with us. During the regular interval updates of the change,
-	// don't bring the process down if there's an error talking to github, as we
-	// expect it might just be temporary downtime for github.
+	// don't bring the process down if there's an error talking to GitHub, as we
+	// expect it might just be temporary downtime for GitHub.
 	if err != nil {
 		logger.Error("failed-starting-cache-loader", err)
 		return err
@@ -54,7 +54,7 @@ func (c *cacheLoader) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 
 	close(ready)
 
-	timer := c.clock.NewTimer(CacheUpdateInterval)
+	timer := c.clock.NewTimer(UpdateInterval)
 	for {
 		select {
 		case <-timer.C():
@@ -62,13 +62,13 @@ func (c *cacheLoader) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 			if err != nil {
 				logger.Error("failed-updating-cache", err)
 			}
-			timer.Reset(CacheUpdateInterval)
+			timer.Reset(UpdateInterval)
 		case signal := <-signals:
 			logger.Info("signaled", lager.Data{"signal": signal.String})
 			timer.Stop()
+			return nil
 		}
 	}
-	return nil
 }
 
 func (c *cacheLoader) updateCache(logger lager.Logger) error {
@@ -105,7 +105,7 @@ func (c *cacheLoader) updateCache(logger lager.Logger) error {
 			if resp.NextPage == 0 {
 				break
 			}
-			opt.ListOptions.Page = resp.NextPage
+			opt.Page = resp.NextPage
 		}
 	}
 	logger.Info("finished-fetching-orgs", lager.Data{"orgs": c.orgs})
