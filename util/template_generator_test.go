@@ -6,7 +6,6 @@ import (
 	. "github.com/onsi/gomega"
 
 	"fmt"
-	"io/ioutil"
 	"os"
 )
 
@@ -62,7 +61,7 @@ var _ = Describe("Generate Application Templates", func() {
 			Expect(manifestTargetFile).To(BeAnExistingFile())
 
 			var content []byte
-			content, err = ioutil.ReadFile(manifestTargetFile)
+			content, err = os.ReadFile(manifestTargetFile)
 			Expect(string(content)).To(ContainSubstring("code-acceptance\n"))
 		})
 
@@ -70,7 +69,7 @@ var _ = Describe("Generate Application Templates", func() {
 			Expect(configTargetFile).To(BeAnExistingFile())
 
 			var content []byte
-			content, err = ioutil.ReadFile(configTargetFile)
+			content, err = os.ReadFile(configTargetFile)
 			Expect(string(content)).To(ContainSubstring("code-acceptance.cfapps.io"))
 		})
 	})

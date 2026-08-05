@@ -41,12 +41,12 @@ func GenerateManifest(templatePath, targetPath string) error {
 		memory = "512M"
 	}
 
-	disk_quota := os.Getenv("DISK_QUOTA")
-	if disk_quota == "" {
-		disk_quota = "512M"
+	diskQuota := os.Getenv("DISK_QUOTA")
+	if diskQuota == "" {
+		diskQuota = "512M"
 	}
 
-	return generateActual(t, targetPath, map[string]interface{}{"appName": appName, "services": serviceNames, "route": route, "memory": memory, "instances": instances, "disk_quota": disk_quota})
+	return generateActual(t, targetPath, map[string]interface{}{"appName": appName, "services": serviceNames, "route": route, "memory": memory, "instances": instances, "disk_quota": diskQuota})
 }
 
 func GenerateConfig(templatePath, targetPath string) error {

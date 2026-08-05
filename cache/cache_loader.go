@@ -11,7 +11,7 @@ import (
 	"github.com/tedsuo/ifrit"
 )
 
-const CacheUpdateInterval = 10 * time.Minute
+const UpdateInterval = 10 * time.Minute
 
 type cacheLoader struct {
 	logger        lager.Logger
@@ -54,7 +54,7 @@ func (c *cacheLoader) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 
 	close(ready)
 
-	timer := c.clock.NewTimer(CacheUpdateInterval)
+	timer := c.clock.NewTimer(UpdateInterval)
 	for {
 		select {
 		case <-timer.C():
@@ -62,7 +62,7 @@ func (c *cacheLoader) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 			if err != nil {
 				logger.Error("failed-updating-cache", err)
 			}
-			timer.Reset(CacheUpdateInterval)
+			timer.Reset(UpdateInterval)
 		case signal := <-signals:
 			logger.Info("signaled", lager.Data{"signal": signal.String})
 			timer.Stop()

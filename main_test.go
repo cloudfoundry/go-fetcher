@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"os/exec"
@@ -80,7 +80,7 @@ var _ = Describe("Import Path Redirect Service", func() {
 
 		bytes, err := json.Marshal(conf)
 		Expect(err).NotTo(HaveOccurred())
-		err = ioutil.WriteFile(configFile, bytes, 0644)
+		err = os.WriteFile(configFile, bytes, 0644)
 		Expect(err).NotTo(HaveOccurred())
 
 		os.Setenv("CONFIG", configFile)
@@ -116,7 +116,7 @@ var _ = Describe("Import Path Redirect Service", func() {
 			Expect(err).NotTo(HaveOccurred())
 			defer func() { _ = res.Body.Close() }()
 
-			body, err := ioutil.ReadAll(res.Body)
+			body, err := io.ReadAll(res.Body)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(body).To(ContainSubstring(fmt.Sprintf(
 				`<meta name="go-import" content="%s/repository-1 git %s/cloudfoundry/repository-1">`,
@@ -204,7 +204,7 @@ var _ = Describe("Import Path Redirect Service", func() {
 				defer func() { _ = res.Body.Close() }()
 
 				var body []byte
-				body, err = ioutil.ReadAll(res.Body)
+				body, err = io.ReadAll(res.Body)
 				Expect(err).NotTo(HaveOccurred())
 
 				expectedImport := fmt.Sprintf(`<meta name="go-import" content="%s/repository-1 git `, conf.ImportPrefix)

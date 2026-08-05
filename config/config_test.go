@@ -1,7 +1,6 @@
 package config_test
 
 import (
-	"io/ioutil"
 	"os"
 
 	. "github.com/onsi/ginkgo"
@@ -19,7 +18,7 @@ var _ = Describe("Load Configuration", func() {
 
 	BeforeEach(func() {
 		var err error
-		tmpDir, err = ioutil.TempDir("", "")
+		tmpDir, err = os.MkdirTemp("", "")
 		Expect(err).NotTo(HaveOccurred())
 
 		jsonContent := []byte(` {
@@ -29,7 +28,7 @@ var _ = Describe("Load Configuration", func() {
 				"IndexPath": "some_relative/path"
 		}`)
 
-		err = ioutil.WriteFile(tmpDir+"/config.json", jsonContent, 0644)
+		err = os.WriteFile(tmpDir+"/config.json", jsonContent, 0644)
 		Expect(err).NotTo(HaveOccurred())
 		filePath = tmpDir + "/config.json"
 	})

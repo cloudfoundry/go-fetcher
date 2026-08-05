@@ -101,8 +101,8 @@ var _ = Describe("CacheLoader", func() {
 				nextPage++
 			}
 			return []*github.Repository{
-					&github.Repository{},
-					&github.Repository{},
+					{},
+					{},
 				},
 				&github.Response{
 					NextPage: nextPage,
@@ -121,10 +121,10 @@ var _ = Describe("CacheLoader", func() {
 
 		Expect(fakeRepoService.ListByOrgCallCount()).To(Equal(2))
 
-		fakeClock.WaitForWatcherAndIncrement(cache.CacheUpdateInterval)
+		fakeClock.WaitForWatcherAndIncrement(cache.UpdateInterval)
 		Eventually(fakeRepoService.ListByOrgCallCount).Should(Equal(4))
 
-		fakeClock.WaitForWatcherAndIncrement(cache.CacheUpdateInterval)
+		fakeClock.WaitForWatcherAndIncrement(cache.UpdateInterval)
 		Eventually(fakeRepoService.ListByOrgCallCount).Should(Equal(6))
 	})
 
@@ -186,7 +186,7 @@ var _ = Describe("CacheLoader", func() {
 			return nil, nil, errors.New("not found")
 		}
 
-		fakeClock.WaitForWatcherAndIncrement(cache.CacheUpdateInterval)
+		fakeClock.WaitForWatcherAndIncrement(cache.UpdateInterval)
 		fakeClock.WaitForWatcherAndIncrement(1)
 		_, firstFoundInCache = locCache.Lookup("first-repo")
 		Expect(firstFoundInCache).To(BeFalse())

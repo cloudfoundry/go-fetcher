@@ -2,9 +2,9 @@ package handlers_test
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 
 	"code.cloudfoundry.org/clock"
 	"code.cloudfoundry.org/lager/lagertest"
@@ -51,7 +51,7 @@ var _ = Describe("Handler", func() {
 			res = httptest.NewRecorder()
 			handler.GetMeta(res, req)
 			var readErr error
-			indexHtml, readErr = ioutil.ReadFile(cfg.IndexPath)
+			indexHtml, readErr = os.ReadFile(cfg.IndexPath)
 			Expect(readErr).NotTo(HaveOccurred())
 		})
 
