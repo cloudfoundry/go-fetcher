@@ -42,11 +42,11 @@ func (c *cacheLoader) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 	// Initialize the cache
 	err := c.updateCache(logger)
 
-	// On starup, fail if there is an error with the initial call to github,
-	// becaue it's more likely to be noticed and there's a higher change the
+	// On startup, fail if there is an error with the initial call to GitHub,
+	// because it's more likely to be noticed and there's a higher change the
 	// problem is with us. During the regular interval updates of the change,
-	// don't bring the process down if there's an error talking to github, as we
-	// expect it might just be temporary downtime for github.
+	// don't bring the process down if there's an error talking to GitHub, as we
+	// expect it might just be temporary downtime for GitHub.
 	if err != nil {
 		logger.Error("failed-starting-cache-loader", err)
 		return err

@@ -8,7 +8,7 @@ import (
 )
 
 type cacheEntry struct {
-	// location is the full url to the repo on github
+	// location is the full url to the repo on GitHub
 	location  string
 	updatedAt time.Time
 }

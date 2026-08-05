@@ -34,7 +34,7 @@ var _ = Describe("Handler", func() {
 			Overrides: map[string]string{
 				"overridden": "http://override.org/other-org/overridden"},
 			GithubURL:    "http://example.com",
-			GithubAPIKey: "somekey-somekey",
+			GithubAPIKey: "fake-github-api-key",
 			IndexPath:    "../public/index.html",
 		}
 
@@ -109,7 +109,7 @@ var _ = Describe("Handler", func() {
 					req.Header.Add("User-Agent", "NoRedirect")
 				})
 
-				It("returns the second organiztion in the HTML meta tags,", func() {
+				It("returns the second organization in the HTML meta tags,", func() {
 					Expect(res.Code).To(Equal(http.StatusOK))
 
 					resBody := res.Body.String()
