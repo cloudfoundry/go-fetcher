@@ -80,12 +80,12 @@ func (h *Handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 		goImportContent := fmt.Sprintf("%s git %s", h.config.ImportPrefix+"/"+repoName, location)
 		goImport := fmt.Sprintf("<meta name=\"go-import\" content=\"%s\">", goImportContent)
 		logger.Debug("meta.go-import", lager.Data{"content": goImportContent})
-		fmt.Fprintf(writer, goImport) //nolint:errcheck,staticcheck
+		fmt.Fprintf(writer, goImport) //nolint:errcheck,staticcheck,govet
 
 		goSourceContent := fmt.Sprintf("%s _ %s", h.config.ImportPrefix+"/"+repoName, location)
 		goSource := fmt.Sprintf("<meta name=\"go-source\" content=\"%s\">", goSourceContent)
 		logger.Debug("meta.go-source", lager.Data{"content": goSourceContent})
-		fmt.Fprintf(writer, goSource) //nolint:errcheck,staticcheck
+		fmt.Fprintf(writer, goSource) //nolint:errcheck,staticcheck,govet
 
 		// Also add a browser redirect to pkg.go.dev for human visitors.
 		if !contains(h.config.NoRedirectAgents, request.Header.Get("User-Agent")) {

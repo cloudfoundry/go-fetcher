@@ -21,6 +21,7 @@ type cacheLoader struct {
 	clock         clock.Clock
 }
 
+//go:generate go tool counterfeiter -generate
 //go:generate counterfeiter -o fakes/fake_repositories_service.go . RepositoriesService
 type RepositoriesService interface {
 	ListByOrg(ctx context.Context, org string, opt *github.RepositoryListByOrgOptions) ([]*github.Repository, *github.Response, error)
