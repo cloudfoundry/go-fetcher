@@ -74,7 +74,6 @@ application:
   - name: example
 env:
   GOPACKAGENAME: github.com/cloudfoundry/go-fetcher/cmd/go-fetcher
-  GOVERSION: go1.13
   CONFIG: config.json
 END
 ```
