@@ -91,9 +91,10 @@ func (h *Handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 		// Also add a browser redirect to pkg.go.dev for human visitors.
 		if !contains(h.config.NoRedirectAgents, request.Header.Get("User-Agent")) {
 			logger.Debug("redirect.meta", lager.Data{"path": repoPath})
+			escapedRepoPath := html.EscapeString(repoPath)
 			if _, err := fmt.Fprintf(writer,
 				"<meta http-equiv=\"refresh\" content=\"0; url=https://pkg.go.dev/%s/%s\">",
-				html.EscapeString(h.config.ImportPrefix), html.EscapeString(repoPath)); err != nil {
+				h.config.ImportPrefix, escapedRepoPath); err != nil {
 				logger.Error("redirect.meta", err)
 			}
 		} else {
