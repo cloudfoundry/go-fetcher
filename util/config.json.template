@@ -11,7 +11,11 @@
     "GoDocBot"
   ],
   "Overrides": {
+    "config-server": "https://github.com/cloudfoundry/config-server-release",
     "stager": "https://github.com/cloudfoundry-incubator/stager"
+  },
+  "Subdirs": {
+    "config-server": "src/config-server"
   },
   "GithubURL": "https://api.github.com"{{ if .githubAPIKey }},
   "GithubAPIKey": "{{.githubAPIKey}}"{{ end }},
