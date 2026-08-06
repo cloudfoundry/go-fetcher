@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"html"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -116,14 +117,14 @@ func (h *Handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 	if subdir := h.config.Subdirs[repoName]; subdir != "" {
 		goImportContent = fmt.Sprintf("%s %s", goImportContent, subdir)
 	}
-	goImport := fmt.Sprintf("<meta name=\"go-import\" content=\"%s\">", goImportContent)
+	goImport := fmt.Sprintf("<meta name=\"go-import\" content=\"%s\">", html.EscapeString(goImportContent))
 	logger.Debug("meta.go-import", lager.Data{"content": goImportContent})
 	if _, err := fmt.Fprint(writer, goImport); err != nil {
 		logger.Error("meta.go-import", err)
 	}
 
 	goSourceContent := fmt.Sprintf("%s _ %s", h.config.ImportPrefix+"/"+repoName, location)
-	goSource := fmt.Sprintf("<meta name=\"go-source\" content=\"%s\">", goSourceContent)
+	goSource := fmt.Sprintf("<meta name=\"go-source\" content=\"%s\">", html.EscapeString(goSourceContent))
 	logger.Debug("meta.go-source", lager.Data{"content": goSourceContent})
 	if _, err := fmt.Fprint(writer, goSource); err != nil {
 		logger.Error("meta.go-source", err)
