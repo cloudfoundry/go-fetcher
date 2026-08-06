@@ -25,6 +25,7 @@ var _ = Describe("Load Configuration", func() {
 				"importPrefix": "test",
 				"orgList": ["test_org"],
 				"NoRedirectAgents": ["test_agent"],
+				"Subdirs": {"test_repo": "src/test_repo"},
 				"IndexPath": "some_relative/path"
 		}`)
 
@@ -45,6 +46,7 @@ var _ = Describe("Load Configuration", func() {
 			Expect(c.ImportPrefix).To(Equal("test"))
 			Expect(c.OrgList).To(Equal([]string{"test_org"}))
 			Expect(c.NoRedirectAgents).To(Equal([]string{"test_agent"}))
+			Expect(c.Subdirs).To(Equal(map[string]string{"test_repo": "src/test_repo"}))
 			Expect(c.IndexPath).To(Equal("some_relative/path"))
 		})
 	})
