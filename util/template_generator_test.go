@@ -1,12 +1,13 @@
 package util_test
 
 import (
-	"github.com/cloudfoundry/go-fetcher/util"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-
 	"fmt"
 	"os"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+
+	"github.com/cloudfoundry/go-fetcher/util"
 )
 
 // NOTE: os.Setenv/os.Unsetenv errors are intentionally ignored in these tests;
@@ -46,12 +47,12 @@ var _ = Describe("Generate Application Templates", func() {
 		os.Setenv("DISK_QUOTA", "512M")
 
 		manifestTemplateFile = "manifest.yml.template"
-		manifestTargetFile = fmt.Sprintf("manifest-%d.yml", GinkgoParallelNode())
+		manifestTargetFile = fmt.Sprintf("manifest-%d.yml", GinkgoParallelProcess())
 		err = util.GenerateManifest(manifestTemplateFile, manifestTargetFile)
 		Expect(err).NotTo(HaveOccurred())
 
 		configTemplateFile = "config.json.template"
-		configTargetFile = fmt.Sprintf("config-%d.json", GinkgoParallelNode())
+		configTargetFile = fmt.Sprintf("config-%d.json", GinkgoParallelProcess())
 		err = util.GenerateConfig(configTemplateFile, configTargetFile)
 		Expect(err).NotTo(HaveOccurred())
 	})
