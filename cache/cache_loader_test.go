@@ -5,28 +5,29 @@ import (
 	"errors"
 	"time"
 
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+
 	"code.cloudfoundry.org/clock"
 	"code.cloudfoundry.org/clock/fakeclock"
-	"code.cloudfoundry.org/lager/lagertest"
-	"github.com/cloudfoundry/go-fetcher/cache"
-	"github.com/cloudfoundry/go-fetcher/cache/fakes"
+	"code.cloudfoundry.org/lager/v3/lagertest"
 	"github.com/google/go-github/github"
 	"github.com/tedsuo/ifrit"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	"github.com/cloudfoundry/go-fetcher/cache"
+	"github.com/cloudfoundry/go-fetcher/cache/cachefakes"
 )
 
 var _ = Describe("CacheLoader", func() {
 	var (
-		fakeRepoService *fakes.FakeRepositoriesService
+		fakeRepoService *cachefakes.FakeRepositoriesService
 		cacheLoader     ifrit.Runner
 		locCache        *cache.LocationCache
 		fakeClock       *fakeclock.FakeClock
 	)
 
 	BeforeEach(func() {
-		fakeRepoService = &fakes.FakeRepositoriesService{}
+		fakeRepoService = &cachefakes.FakeRepositoriesService{}
 		fakeClock = fakeclock.NewFakeClock(time.Now())
 		cacheLogger := lagertest.NewTestLogger("cache")
 		locCache = cache.NewLocationCache(cacheLogger, clock.NewClock())

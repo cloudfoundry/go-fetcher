@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"code.cloudfoundry.org/clock"
-	"code.cloudfoundry.org/lager"
+	"code.cloudfoundry.org/lager/v3"
 	"github.com/google/go-github/github"
 	"github.com/tedsuo/ifrit"
 )
@@ -22,7 +22,7 @@ type cacheLoader struct {
 }
 
 //go:generate go tool counterfeiter -generate
-//go:generate counterfeiter -o fakes/fake_repositories_service.go . RepositoriesService
+//counterfeiter:generate . RepositoriesService
 type RepositoriesService interface {
 	ListByOrg(ctx context.Context, org string, opt *github.RepositoryListByOrgOptions) ([]*github.Repository, *github.Response, error)
 }

@@ -11,13 +11,13 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/cloudfoundry/go-fetcher/config"
-	. "github.com/onsi/ginkgo"
-	gconf "github.com/onsi/ginkgo/config"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
 	"github.com/onsi/gomega/ghttp"
+
+	"github.com/cloudfoundry/go-fetcher/config"
 )
 
 // NOTE: os.Setenv/os.Unsetenv errors are intentionally ignored in these tests;
@@ -65,11 +65,11 @@ var _ = Describe("Import Path Redirect Service", func() {
 		fakeGithubServer.AllowUnhandledRequests = true
 		fakeGithubServer.UnhandledRequestStatusCode = http.StatusNotFound
 
-		port = strconv.Itoa(8182 + gconf.GinkgoConfig.ParallelNode)
+		port = strconv.Itoa(8182 + GinkgoParallelProcess())
 
 		os.Setenv("PORT", port)
 
-		configFile = fmt.Sprintf("config-%d.json", GinkgoParallelNode())
+		configFile = fmt.Sprintf("config-%d.json", GinkgoParallelProcess())
 		conf = &config.Config{
 			LogLevel:         "debug",
 			ImportPrefix:     "the.canonical.import.path",

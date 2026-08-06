@@ -23,7 +23,7 @@ import (
 	"github.com/tedsuo/ifrit/sigmon"
 
 	"code.cloudfoundry.org/clock"
-	"code.cloudfoundry.org/lager"
+	"code.cloudfoundry.org/lager/v3"
 )
 
 var generateConfig = flag.Bool(
