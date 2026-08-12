@@ -1,3 +1,0 @@
-#!/bin/bash
-
-./generate_local && PORT=8800 CONFIG="config.json" go run main.go
