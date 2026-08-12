@@ -6,9 +6,5 @@ applications:
     disk_quota: {{.disk_quota}}
     routes:
     - route: {{.route}}
-env:
-  GOPACKAGENAME: github.com/cloudfoundry/go-fetcher/cmd/go-fetcher
-  CONFIG: config.json
-{{ if .services }}services:{{ end }}
-{{ range .services }}- {{ . }}
-{{ end }}
+    env:
+      CONFIG: config.json
