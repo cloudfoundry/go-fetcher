@@ -38,16 +38,14 @@ func main() {
 	flag.Parse()
 
 	if *generateConfig {
-		templateFile := "util/config.json.template"
 		configFile := "config.json"
-		err := util.GenerateConfig(templateFile, configFile)
+		err := util.GenerateConfig(configFile)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		templateFile = "util/manifest.yml.template"
 		configFile = "manifest.yml"
-		err = util.GenerateManifest(templateFile, configFile)
+		err = util.GenerateManifest(configFile)
 		if err != nil {
 			log.Fatal(err)
 		}
