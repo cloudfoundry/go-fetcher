@@ -1,0 +1,16 @@
+#!/bin/bash
+set -euo pipefail
+
+REPO_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
+
+pushd "${REPO_ROOT}"
+  go generate ./...
+  go run github.com/onsi/ginkgo/v2/ginkgo run \
+    -p \
+    -r \
+    -race \
+    --randomize-all \
+    --randomize-suites \
+    --fail-on-pending \
+    "$@"
+popd

@@ -16,11 +16,20 @@ cd go-fetcher/
 ```
 
 We are using [Ginkgo](https://github.com/onsi/ginkgo) to run tests. You may
-use the `run_specs` command:
+use the `test` command which uses [counterfeiter](https://github.com/maxbrunsfeld/counterfeiter) to
+generate fakes:
 
 ```
-./bin/run_specs
+./bin/test
 ```
+
+If you are changing interfaces, you can rebuild fakes with the
+following:
+
+```
+go generate ./...
+```
+
 
 Some environment variables and [configuration](#configuration) are required to run. For local testing, you may use the `run_local` command and point your browser to [localhost:8800](http://localhost:8800):
 
@@ -28,20 +37,11 @@ Some environment variables and [configuration](#configuration) are required to r
 ./bin/run_local
 ```
 
-We are using [counterfeiter](https://github.com/maxbrunsfeld/counterfeiter) to
-generate fakes. If you are changing interfaces, you can rebuild fakes with the
-following:
-
-```
-go get github.com/maxbrunsfeld/counterfeiter/v6
-go generate ./...
-```
-
 ## Configuration
 
 See the following for an example of what configuration should look like:
 
-```
+```shell
 cat > config.json << END
 {
   "ImportPrefix": "example.com",
@@ -68,19 +68,18 @@ END
 
 Deploying to Cloud Foundry is straight forward, but requires you to do so from the checked out repository so that `cf` can recognize and upload the package. You will need to create a `manifest.yml` to accompany your `config.json`:
 
-```
+```shell
 cat > manifest.yml << END
 application:
   - name: example
-env:
-  GOPACKAGENAME: github.com/cloudfoundry/go-fetcher/cmd/go-fetcher
-  CONFIG: config.json
+    env:
+      CONFIG: config.json
 END
 ```
 
 Then, login to your cf instance and push the application:
 
-```
+```shell
 cf login ...
 cf push example
 ```

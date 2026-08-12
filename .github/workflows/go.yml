@@ -25,4 +25,4 @@ jobs:
       - uses: actions/setup-go@v6
         with:
           go-version: stable
-      - run: ./bin/run_specs
+      - run: ./bin/test
