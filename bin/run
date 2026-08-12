@@ -1,7 +1,0 @@
-#!/bin/bash
-set -euo pipefail
-
-pushd "${REPO_ROOT}"
-  ./bin/build
-  go-fetcher
-popd
