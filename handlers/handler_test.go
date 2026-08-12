@@ -32,10 +32,15 @@ var _ = Describe("Handler", func() {
 			OrgList:          []string{"org1", "org2"},
 			ImportPrefix:     "import-prefix",
 			NoRedirectAgents: []string{"NoRedirect"},
-			Overrides:        map[string]string{"overridden": "https://override.example.com/other-org/overridden"},
-			GithubURL:        "https://example.com",
-			GithubAPIKey:     "fake-github-api-key",
-			IndexPath:        "../public/index.html",
+			Overrides: map[string]config.Override{
+				"overridden": {
+					Repository: "https://override.example.com/other-org/overridden",
+					Path:       "override/path",
+				},
+			},
+			GithubURL:    "https://example.com",
+			GithubAPIKey: "fake-github-api-key",
+			IndexPath:    "../public/index.html",
 		}
 
 		logger = lagertest.NewTestLogger("test")
@@ -158,11 +163,9 @@ var _ = Describe("Handler", func() {
 		Context("when the repo has a configured module subdirectory", func() {
 			BeforeEach(func() {
 				var err error
-				cfg.Subdirs = map[string]string{"repo1": "src/repo1"}
 				handler = handlers.NewHandler(logger, cfg, locationCache)
 
-				locationCache.Add("repo1", fmt.Sprintf("%s/org1/repo1", cfg.GithubURL))
-				req, err = http.NewRequest("GET", "/repo1", nil)
+				req, err = http.NewRequest("GET", "/overridden", nil)
 				Expect(err).NotTo(HaveOccurred())
 				req.Header.Add("User-Agent", "NoRedirect")
 			})
@@ -172,8 +175,8 @@ var _ = Describe("Handler", func() {
 
 				resBody := res.Body.String()
 				Expect(resBody).To(ContainSubstring(fmt.Sprintf(
-					"<meta name=\"go-import\" content=\"import-prefix/repo1 git %s/org1/repo1 src/repo1\">",
-					cfg.GithubURL)))
+					`<meta name="go-import" content="import-prefix/overridden git %s %s">`,
+					cfg.Overrides["overridden"].Repository, cfg.Overrides["overridden"].Path)))
 			})
 		})
 

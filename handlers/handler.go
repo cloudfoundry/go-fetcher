@@ -50,11 +50,11 @@ func (h *Handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	location := ""
-	for k := range h.config.Overrides {
-		if k == repoName {
-			location = h.config.Overrides[k]
-			logger.Debug("override", lager.Data{"location": location})
-		}
+
+	repoOverride, overrideExists := h.config.Overrides[repoName]
+	if overrideExists {
+		location = repoOverride.Repository
+		logger.Debug("override", lager.Data{"location": location})
 	}
 
 	if location == "" {
@@ -114,8 +114,8 @@ func (h *Handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 	goImportContent := fmt.Sprintf("%s git %s", h.config.ImportPrefix+"/"+repoName, location)
 	// Go 1.25+ recognizes an optional fourth field naming the subdirectory that
 	// holds the module's go.mod, allowing a module to live below the repo root.
-	if subdir := h.config.Subdirs[repoName]; subdir != "" {
-		goImportContent = fmt.Sprintf("%s %s", goImportContent, subdir)
+	if repoOverride.Path != "" {
+		goImportContent = fmt.Sprintf("%s %s", goImportContent, repoOverride.Path)
 	}
 	goImport := fmt.Sprintf("<meta name=\"go-import\" content=\"%s\">", html.EscapeString(goImportContent))
 	logger.Debug("meta.go-import", lager.Data{"content": goImportContent})

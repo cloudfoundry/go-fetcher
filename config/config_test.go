@@ -22,11 +22,16 @@ var _ = Describe("Load Configuration", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		jsonContent := []byte(` {
-				"importPrefix": "test",
-				"orgList": ["test_org"],
-				"NoRedirectAgents": ["test_agent"],
-				"Subdirs": {"test_repo": "src/test_repo"},
-				"IndexPath": "some_relative/path"
+		  "importPrefix": "test",
+		  "orgList": ["test_org"],
+		  "NoRedirectAgents": ["test_agent"],
+		  "Overrides": {
+			"test_repo": {
+			  "Repository": "https://golang.example.com/test_repo",
+			  "Path": "src/test_repo"
+			}
+		  },
+		  "IndexPath": "some_relative/path"
 		}`)
 
 		err = os.WriteFile(tmpDir+"/config.json", jsonContent, 0644)
@@ -46,9 +51,8 @@ var _ = Describe("Load Configuration", func() {
 			Expect(c.ImportPrefix).To(Equal("test"))
 			Expect(c.OrgList).To(Equal([]string{"test_org"}))
 			Expect(c.NoRedirectAgents).To(Equal([]string{"test_agent"}))
-			Expect(c.Subdirs).To(Equal(map[string]string{"test_repo": "src/test_repo"}))
+			Expect(c.Overrides["test_repo"]).To(Equal(config.Override{Repository: "https://golang.example.com/test_repo", Path: "src/test_repo"}))
 			Expect(c.IndexPath).To(Equal("some_relative/path"))
 		})
 	})
-
 })
