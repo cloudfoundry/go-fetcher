@@ -118,8 +118,8 @@ var _ = Describe("Handler", func() {
 					Expect(res.Code).To(Equal(http.StatusOK))
 
 					resBody := res.Body.String()
-					Expect(resBody).To(ContainSubstring(fmt.Sprintf("<meta name=\"go-import\" content=\"import-prefix/repo1 git %s/org1/repo1\">", cfg.GithubURL)))
-					Expect(resBody).To(ContainSubstring(fmt.Sprintf("<meta name=\"go-source\" content=\"import-prefix/repo1 _ %s/org1/repo1\">", cfg.GithubURL)))
+					Expect(resBody).To(ContainSubstring(fmt.Sprintf(`<meta name="go-import" content="import-prefix/repo1 git %s/org1/repo1">`, cfg.GithubURL)))
+					Expect(resBody).To(ContainSubstring(fmt.Sprintf(`<meta name="go-source" content="import-prefix/repo1 _ %s/org1/repo1">`, cfg.GithubURL)))
 				})
 			})
 
@@ -134,13 +134,13 @@ var _ = Describe("Handler", func() {
 					Expect(res.Code).To(Equal(http.StatusOK))
 
 					resBody := res.Body.String()
-					Expect(resBody).To(ContainSubstring(fmt.Sprintf("<meta name=\"go-import\" content=\"import-prefix/repo1 git %s/org1/repo1\">", cfg.GithubURL)))
-					Expect(resBody).To(ContainSubstring(fmt.Sprintf("<meta name=\"go-source\" content=\"import-prefix/repo1 _ %s/org1/repo1\">", cfg.GithubURL)))
+					Expect(resBody).To(ContainSubstring(fmt.Sprintf(`<meta name="go-import" content="import-prefix/repo1 git %s/org1/repo1">`, cfg.GithubURL)))
+					Expect(resBody).To(ContainSubstring(fmt.Sprintf(`<meta name="go-source" content="import-prefix/repo1 _ %s/org1/repo1">`, cfg.GithubURL)))
 				})
 
 				It("also includes a browser redirect to pkg.go.dev", func() {
 					resBody := res.Body.String()
-					Expect(resBody).To(ContainSubstring("<meta http-equiv=\"refresh\" content=\"0; url=https://pkg.go.dev/import-prefix/repo1\">"))
+					Expect(resBody).To(ContainSubstring(`<meta http-equiv="refresh" content="0; url=https://pkg.go.dev/import-prefix/repo1">`))
 				})
 
 				Context("when the user agent is in the NoRedirectAgents list", func() {
@@ -152,9 +152,9 @@ var _ = Describe("Handler", func() {
 						Expect(res.Code).To(Equal(http.StatusOK))
 
 						resBody := res.Body.String()
-						Expect(resBody).To(ContainSubstring(fmt.Sprintf("<meta name=\"go-import\" content=\"import-prefix/repo1 git %s/org1/repo1\">", cfg.GithubURL)))
-						Expect(resBody).To(ContainSubstring(fmt.Sprintf("<meta name=\"go-source\" content=\"import-prefix/repo1 _ %s/org1/repo1\">", cfg.GithubURL)))
-						Expect(resBody).NotTo(ContainSubstring("http-equiv=\"refresh\""))
+						Expect(resBody).To(ContainSubstring(fmt.Sprintf(`<meta name="go-import" content="import-prefix/repo1 git %s/org1/repo1">`, cfg.GithubURL)))
+						Expect(resBody).To(ContainSubstring(fmt.Sprintf(`<meta name="go-source" content="import-prefix/repo1 _ %s/org1/repo1">`, cfg.GithubURL)))
+						Expect(resBody).NotTo(ContainSubstring(`http-equiv="refresh"`))
 					})
 				})
 			})

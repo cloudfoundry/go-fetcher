@@ -79,12 +79,12 @@ func (h *Handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 	if request.URL.Query().Get("go-get") == "1" {
 		// Always emit go-import and go-source meta tags so `go get` can resolve the import path.
 		goImportContent := fmt.Sprintf("%s git %s", h.config.ImportPrefix+"/"+repoName, location)
-		goImport := fmt.Sprintf("<meta name=\"go-import\" content=\"%s\">", html.EscapeString(goImportContent))
+		goImport := fmt.Sprintf(`<meta name="go-import" content="%s">`, html.EscapeString(goImportContent))
 		logger.Debug("meta.go-import", lager.Data{"content": goImportContent})
 		fmt.Fprint(writer, goImport) //nolint:errcheck,staticcheck,govet
 
 		goSourceContent := fmt.Sprintf("%s _ %s", h.config.ImportPrefix+"/"+repoName, location)
-		goSource := fmt.Sprintf("<meta name=\"go-source\" content=\"%s\">", html.EscapeString(goSourceContent))
+		goSource := fmt.Sprintf(`<meta name="go-source" content="%s">`, html.EscapeString(goSourceContent))
 		logger.Debug("meta.go-source", lager.Data{"content": goSourceContent})
 		fmt.Fprint(writer, goSource) //nolint:errcheck,staticcheck,govet
 
@@ -92,7 +92,7 @@ func (h *Handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 		if !contains(h.config.NoRedirectAgents, request.Header.Get("User-Agent")) {
 			logger.Debug("redirect.meta", lager.Data{"path": repoPath})
 			if _, err := fmt.Fprintf(writer,
-				"<meta http-equiv=\"refresh\" content=\"0; url=https://pkg.go.dev/%s/%s\">",
+				`<meta http-equiv="refresh" content="0; url=https://pkg.go.dev/%s/%s">`,
 				html.EscapeString(h.config.ImportPrefix), html.EscapeString(repoPath)); err != nil {
 				logger.Error("redirect.meta", err)
 			}
@@ -117,14 +117,14 @@ func (h *Handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 	if repoOverride.Path != "" {
 		goImportContent = fmt.Sprintf("%s %s", goImportContent, repoOverride.Path)
 	}
-	goImport := fmt.Sprintf("<meta name=\"go-import\" content=\"%s\">", html.EscapeString(goImportContent))
+	goImport := fmt.Sprintf(`<meta name="go-import" content="%s">`, html.EscapeString(goImportContent))
 	logger.Debug("meta.go-import", lager.Data{"content": goImportContent})
 	if _, err := fmt.Fprint(writer, goImport); err != nil {
 		logger.Error("meta.go-import", err)
 	}
 
 	goSourceContent := fmt.Sprintf("%s _ %s", h.config.ImportPrefix+"/"+repoName, location)
-	goSource := fmt.Sprintf("<meta name=\"go-source\" content=\"%s\">", html.EscapeString(goSourceContent))
+	goSource := fmt.Sprintf(`<meta name="go-source" content="%s">`, html.EscapeString(goSourceContent))
 	logger.Debug("meta.go-source", lager.Data{"content": goSourceContent})
 	if _, err := fmt.Fprint(writer, goSource); err != nil {
 		logger.Error("meta.go-source", err)
