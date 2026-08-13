@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"html"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -78,12 +79,12 @@ func (h *Handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 	if request.URL.Query().Get("go-get") == "1" {
 		// Always emit go-import and go-source meta tags so `go get` can resolve the import path.
 		goImportContent := fmt.Sprintf("%s git %s", h.config.ImportPrefix+"/"+repoName, location)
-		goImport := fmt.Sprintf("<meta name=\"go-import\" content=\"%s\">", goImportContent)
+		goImport := fmt.Sprintf("<meta name=\"go-import\" content=\"%s\">", html.EscapeString(goImportContent))
 		logger.Debug("meta.go-import", lager.Data{"content": goImportContent})
 		fmt.Fprint(writer, goImport) //nolint:errcheck,staticcheck,govet
 
 		goSourceContent := fmt.Sprintf("%s _ %s", h.config.ImportPrefix+"/"+repoName, location)
-		goSource := fmt.Sprintf("<meta name=\"go-source\" content=\"%s\">", goSourceContent)
+		goSource := fmt.Sprintf("<meta name=\"go-source\" content=\"%s\">", html.EscapeString(goSourceContent))
 		logger.Debug("meta.go-source", lager.Data{"content": goSourceContent})
 		fmt.Fprint(writer, goSource) //nolint:errcheck,staticcheck,govet
 
@@ -92,7 +93,7 @@ func (h *Handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 			logger.Debug("redirect.meta", lager.Data{"path": repoPath})
 			if _, err := fmt.Fprintf(writer,
 				"<meta http-equiv=\"refresh\" content=\"0; url=https://pkg.go.dev/%s/%s\">",
-				h.config.ImportPrefix, repoPath); err != nil {
+				html.EscapeString(h.config.ImportPrefix), html.EscapeString(repoPath)); err != nil {
 				logger.Error("redirect.meta", err)
 			}
 		} else {
