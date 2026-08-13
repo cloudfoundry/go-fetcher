@@ -1,10 +1,10 @@
 package cache
 
 import (
+	"log/slog"
 	"time"
 
 	"code.cloudfoundry.org/clock"
-	"code.cloudfoundry.org/lager/v3"
 )
 
 type cacheEntry struct {
@@ -15,11 +15,11 @@ type cacheEntry struct {
 
 type LocationCache struct {
 	items  map[string]*cacheEntry
-	logger lager.Logger
+	logger *slog.Logger
 	clock  clock.Clock
 }
 
-func NewLocationCache(logger lager.Logger, clock clock.Clock) *LocationCache {
+func NewLocationCache(logger *slog.Logger, clock clock.Clock) *LocationCache {
 	return &LocationCache{
 		items:  map[string]*cacheEntry{},
 		logger: logger,
@@ -42,6 +42,6 @@ func (l *LocationCache) Add(repoName, location string) {
 func (l *LocationCache) Swap(newLocationCache *LocationCache) {
 	logger := l.logger
 
-	logger.Info("cache-items-swap", lager.Data{"old_len": len(l.items), "new_len": len(newLocationCache.items)})
+	logger.Info("cache-items-swap", "old_len", len(l.items), "new_len", len(newLocationCache.items))
 	l.items = newLocationCache.items
 }

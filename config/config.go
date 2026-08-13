@@ -3,16 +3,15 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"os"
-
-	"code.cloudfoundry.org/lager/v3"
 )
 
 const (
 	DEBUG = "debug"
 	INFO  = "info"
+	WARN  = "warn"
 	ERROR = "error"
-	FATAL = "fatal"
 )
 
 type Config struct {
@@ -32,26 +31,23 @@ type Override struct {
 	Path       string
 }
 
-func (c *Config) GetLogLevel() lager.LogLevel {
-	var minLagerLogLevel lager.LogLevel
+func (c *Config) GetLogLevel() (slog.Level, error) {
 	switch c.LogLevel {
 	case DEBUG:
-		minLagerLogLevel = lager.DEBUG
+		return slog.LevelDebug, nil
 	case INFO:
-		minLagerLogLevel = lager.INFO
+		return slog.LevelInfo, nil
+	case WARN:
+		return slog.LevelWarn, nil
 	case ERROR:
-		minLagerLogLevel = lager.ERROR
-	case FATAL:
-		minLagerLogLevel = lager.FATAL
+		return slog.LevelError, nil
 	default:
-		panic(fmt.Errorf("unknown log level: %s", c.LogLevel))
+		return slog.LevelInfo, fmt.Errorf("unknown log level '%s', falling back to 'slog.LevelInfo'", c.LogLevel)
 	}
-	return minLagerLogLevel
 }
 
 func Parse(configPath string) (*Config, error) {
 	jsonBlob, err := os.ReadFile(configPath)
-
 	if err != nil {
 		return nil, err
 	}

@@ -2,11 +2,11 @@ package cache
 
 import (
 	"context"
+	"log/slog"
 	"os"
 	"time"
 
 	"code.cloudfoundry.org/clock"
-	"code.cloudfoundry.org/lager/v3"
 	"github.com/google/go-github/github"
 	"github.com/tedsuo/ifrit"
 )
@@ -14,7 +14,7 @@ import (
 const UpdateInterval = 10 * time.Minute
 
 type cacheLoader struct {
-	logger        lager.Logger
+	logger        *slog.Logger
 	orgs          []string
 	locationCache *LocationCache
 	repoService   RepositoriesService
@@ -27,7 +27,7 @@ type RepositoriesService interface {
 	ListByOrg(ctx context.Context, org string, opt *github.RepositoryListByOrgOptions) ([]*github.Repository, *github.Response, error)
 }
 
-func NewCacheLoader(logger lager.Logger, orgs []string, locationCache *LocationCache, repoService RepositoriesService, clock clock.Clock) ifrit.Runner {
+func NewCacheLoader(logger *slog.Logger, orgs []string, locationCache *LocationCache, repoService RepositoriesService, clock clock.Clock) ifrit.Runner {
 	return &cacheLoader{
 		logger:        logger,
 		orgs:          orgs,
@@ -49,7 +49,7 @@ func (c *cacheLoader) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 	// don't bring the process down if there's an error talking to GitHub, as we
 	// expect it might just be temporary downtime for GitHub.
 	if err != nil {
-		logger.Error("failed-starting-cache-loader", err)
+		logger.Error("failed-starting-cache-loader", "error", err)
 		return err
 	}
 
@@ -61,40 +61,40 @@ func (c *cacheLoader) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 		case <-timer.C():
 			err := c.updateCache(logger)
 			if err != nil {
-				logger.Error("failed-updating-cache", err)
+				logger.Error("failed-updating-cache", "error", err)
 			}
 			timer.Reset(UpdateInterval)
 		case signal := <-signals:
-			logger.Info("signaled", lager.Data{"signal": signal.String})
+			logger.Info("signaled", "signal", signal.String())
 			timer.Stop()
 			return nil
 		}
 	}
 }
 
-func (c *cacheLoader) updateCache(logger lager.Logger) error {
-	logger = logger.Session("update-cache")
-	logger.Info("fetching-orgs", lager.Data{"orgs": c.orgs})
+func (c *cacheLoader) updateCache(logger *slog.Logger) error {
+	logger = logger.With("action", "update-cache")
+	logger.Info("fetching-orgs", "orgs", c.orgs)
 
 	tempLocationCache := NewLocationCache(c.logger, c.clock)
 	for i := len(c.orgs) - 1; i >= 0; i-- {
 		org := c.orgs[i]
-		logger.Info("fetching-org", lager.Data{"org": org})
+		logger.Info("fetching-org", "org", org)
 		opt := &github.RepositoryListByOrgOptions{
 			Type:        "public",
 			ListOptions: github.ListOptions{PerPage: 100, Page: 1},
 		}
 
 		for {
-			logger.Info("fetching-page", lager.Data{"org": org, "page": opt.Page})
+			logger.Info("fetching-page", "org", org, "page", opt.Page)
 			repos, resp, err := c.repoService.ListByOrg(context.Background(), org, opt)
 			if err != nil {
-				logger.Error("failed-fetching-page", err, lager.Data{"org": org, "page": opt.Page})
+				logger.Error("failed-fetching-page", "error", err, "org", org, "page", opt.Page)
 				return err
 			}
 
 			for _, repo := range repos {
-				logger.Debug("found-repo", lager.Data{"repo": repo.Name})
+				logger.Debug("found-repo", "repo", repo.Name)
 				if repo.Name == nil {
 					continue
 				}
@@ -102,14 +102,14 @@ func (c *cacheLoader) updateCache(logger lager.Logger) error {
 				tempLocationCache.Add(*repo.Name, *repo.HTMLURL)
 			}
 
-			logger.Info("finished-page", lager.Data{"org": org, "page": opt.Page, "next": resp.NextPage, "last": resp.LastPage})
+			logger.Info("finished-page", "org", org, "page", opt.Page, "next", resp.NextPage, "last", resp.LastPage)
 			if resp.NextPage == 0 {
 				break
 			}
 			opt.Page = resp.NextPage
 		}
 	}
-	logger.Info("finished-fetching-orgs", lager.Data{"orgs": c.orgs})
+	logger.Info("finished-fetching-orgs", "orgs", c.orgs)
 
 	c.locationCache.Swap(tempLocationCache)
 

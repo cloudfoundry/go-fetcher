@@ -2,6 +2,7 @@ package handlers_test
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -10,7 +11,6 @@ import (
 	. "github.com/onsi/gomega"
 
 	"code.cloudfoundry.org/clock"
-	"code.cloudfoundry.org/lager/v3/lagertest"
 	"github.com/cloudfoundry/go-fetcher/cache"
 	"github.com/cloudfoundry/go-fetcher/config"
 	"github.com/cloudfoundry/go-fetcher/handlers"
@@ -21,7 +21,7 @@ var _ = Describe("Handler", func() {
 		handler       *handlers.Handler
 		req           *http.Request
 		res           *httptest.ResponseRecorder
-		logger        *lagertest.TestLogger
+		logger        *slog.Logger
 		locationCache *cache.LocationCache
 		cfg           config.Config
 	)
@@ -43,8 +43,8 @@ var _ = Describe("Handler", func() {
 			IndexPath:    "../public/index.html",
 		}
 
-		logger = lagertest.NewTestLogger("test")
-		cacheLogger := lagertest.NewTestLogger("cache")
+		logger = slog.New(slog.DiscardHandler)
+		cacheLogger := slog.New(slog.DiscardHandler)
 		clock := clock.NewClock()
 		locationCache = cache.NewLocationCache(cacheLogger, clock)
 		handler = handlers.NewHandler(logger, cfg, locationCache)

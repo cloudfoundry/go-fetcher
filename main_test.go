@@ -90,7 +90,7 @@ var _ = Describe("Import Path Redirect Service", func() {
 
 		// Startup includes loading the location cache from GitHub; under -race
 		// and parallel package runs this can exceed the 1s default, so allow more time.
-		Eventually(session, 20*time.Second).Should(gbytes.Say("go-fetcher.started"))
+		Eventually(session, 20*time.Second).Should(gbytes.Say(`"msg":"started"`))
 	})
 
 	AfterEach(func() {

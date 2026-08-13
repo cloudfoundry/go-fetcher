@@ -1,10 +1,10 @@
 package cache_test
 
 import (
+	"log/slog"
 	"time"
 
 	"code.cloudfoundry.org/clock/fakeclock"
-	"code.cloudfoundry.org/lager/v3/lagertest"
 	"github.com/cloudfoundry/go-fetcher/cache"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -17,7 +17,7 @@ var _ = Describe("Location Cache", func() {
 
 	BeforeEach(func() {
 		clock = fakeclock.NewFakeClock(time.Now())
-		logger := lagertest.NewTestLogger("cache")
+		logger := slog.New(slog.DiscardHandler)
 		locationCache = cache.NewLocationCache(logger, clock)
 	})
 
@@ -52,7 +52,7 @@ var _ = Describe("Location Cache", func() {
 			It("the cache should contain only the new items", func() {
 				locationCache.Add("before-repo-name", "cached-location")
 
-				logger := lagertest.NewTestLogger("cache")
+				logger := slog.New(slog.DiscardHandler)
 				newLocationCache := cache.NewLocationCache(logger, clock)
 				newLocationCache.Add("new-repo-name", "new-cached-location")
 
