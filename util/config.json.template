@@ -1,23 +1,24 @@
 {
-  "LogLevel": "info",
+  "GithubAPI": "{{.githubAPI}}",
+  "GithubAPIKey": "{{.githubAPIKey}}",
   "ImportPrefix": "{{.appDomainName}}",
+  "LogLevel": "{{.logLevel}}",
+  "NoRedirectAgents": [
+    "Go-http-client",
+    "GoDocBot"
+  ],
   "OrgList": [
     "cloudfoundry",
     "cloudfoundry-incubator",
     "cloudfoundry-attic"
   ],
-  "NoRedirectAgents": [
-    "Go-http-client",
-    "GoDocBot"
-  ],
   "Overrides": {
-    "config-server": "https://github.com/cloudfoundry/config-server-release",
-    "stager": "https://github.com/cloudfoundry-incubator/stager"
-  },
-  "Subdirs": {
-    "config-server": "src/config-server"
-  },
-  "GithubURL": "https://api.github.com"{{ if .githubAPIKey }},
-  "GithubAPIKey": "{{.githubAPIKey}}"{{ end }},
-  "IndexPath": "public/index.html"
+    "config-server": {
+      "Repository": "https://github.com/cloudfoundry/config-server-release",
+      "Path": "src/config-server"
+    },
+    "stager": {
+      "Repository": "https://github.com/cloudfoundry-incubator/stager"
+    }
+  }
 }

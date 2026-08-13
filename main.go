@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"os"
@@ -23,8 +24,10 @@ import (
 	"github.com/tedsuo/ifrit/sigmon"
 
 	"code.cloudfoundry.org/clock"
-	"code.cloudfoundry.org/lager/v3"
 )
+
+const defaultConfigFile = "config.json"
+const defaultPort = "8080"
 
 var generateConfig = flag.Bool(
 	"generateConfig",
@@ -37,65 +40,61 @@ func main() {
 	// config.json and manifest.yml from the provided templates
 	flag.Parse()
 
+	programLevel := new(slog.LevelVar)
+
+	logHandler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: programLevel})
+	logger := slog.New(logHandler).With("component", "go-fetcher")
+
+	configFile := os.Getenv("CONFIG")
+	if configFile == "" {
+		logger.Warn("config.file", "message", "$CONFIG was empty falling back to 'config.json'")
+		configFile = defaultConfigFile
+	}
+
 	if *generateConfig {
-		templateFile := "util/config.json.template"
-		configFile := "config.json"
-		err := util.GenerateConfig(templateFile, configFile)
+		err := util.GenerateConfig(configFile)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		templateFile = "util/manifest.yml.template"
 		configFile = "manifest.yml"
-		err = util.GenerateManifest(templateFile, configFile)
+		err = util.GenerateManifest(configFile)
 		if err != nil {
 			log.Fatal(err)
 		}
 		return
 	}
 
-	configFile := os.Getenv("CONFIG")
 	cfg, err := config.Parse(configFile)
-
 	if err != nil {
-		panic("config file error: " + err.Error())
+		logger.Error("config.parse", "error", fmt.Errorf("unable to parse CONFIG='%s': %w", configFile, err))
 	}
 
-	logger := lager.NewLogger("go-fetcher")
-	sink := lager.NewReconfigurableSink(lager.NewWriterSink(os.Stdout, lager.DEBUG), cfg.GetLogLevel())
-	logger.RegisterSink(sink)
+	logLevel, err := cfg.GetLogLevel()
+	if err != nil {
+		logger.Warn("config.log-level", "error", err)
+	}
+	programLevel.Set(logLevel)
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		logger.Error("server.failed", fmt.Errorf("$PORT must be set"))
+		logger.Warn("server.port", "message", "$PORT was empty falling back to '8080'")
+		port = defaultPort
 	}
 
 	clck := clock.NewClock()
-	locationCache := cache.NewLocationCache(logger.Session("cache"), clck)
+	locationCache := cache.NewLocationCache(logger.With("component", "cache"), clck)
 	handler := handlers.NewHandler(logger, *cfg, locationCache)
 	http.HandleFunc("/", handler.GetMeta)
 
-	var tc *http.Client
-	if cfg.GithubAPIKey != "" {
-		ts := oauth2.StaticTokenSource(
-			&oauth2.Token{AccessToken: cfg.GithubAPIKey},
-		)
-		tc = oauth2.NewClient(context.Background(), ts)
-	}
-
-	client := github.NewClient(tc)
-	githubURL, err := url.Parse(fmt.Sprintf("%s/", strings.TrimSuffix(cfg.GithubURL, "/")))
-	if err != nil {
-		log.Fatal(err)
-	}
-	client.BaseURL = githubURL
+	githubClient := newGithubClient(cfg)
 
 	httpServer := http_server.New(":"+port, http.DefaultServeMux)
 	cacheLoader := cache.NewCacheLoader(
-		logger.Session("cache-loader"),
+		logger.With("component", "cache-loader"),
 		cfg.OrgList,
 		locationCache,
-		client.Repositories,
+		githubClient.Repositories,
 		clck,
 	)
 
@@ -112,9 +111,28 @@ func main() {
 
 	err = <-monitor.Wait()
 	if err != nil {
-		logger.Error("exited-with-failure", err)
+		logger.Error("exited-with-failure", "error", err)
 		os.Exit(1)
 	}
 
 	logger.Info("exited")
+}
+
+func newGithubClient(cfg *config.Config) *github.Client {
+	var httpClient *http.Client
+	if cfg.GithubAPIKey != "" {
+		ts := oauth2.StaticTokenSource(
+			&oauth2.Token{AccessToken: cfg.GithubAPIKey},
+		)
+		httpClient = oauth2.NewClient(context.Background(), ts)
+	}
+
+	githubClient := github.NewClient(httpClient)
+	githubURL, err := url.Parse(fmt.Sprintf("%s/", strings.TrimSuffix(cfg.GithubAPI, "/")))
+	if err != nil {
+		log.Fatal(err)
+	}
+	githubClient.BaseURL = githubURL
+
+	return githubClient
 }

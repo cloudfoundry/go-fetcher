@@ -2,6 +2,7 @@ package handlers_test
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -10,7 +11,6 @@ import (
 	. "github.com/onsi/gomega"
 
 	"code.cloudfoundry.org/clock"
-	"code.cloudfoundry.org/lager/v3/lagertest"
 	"github.com/cloudfoundry/go-fetcher/cache"
 	"github.com/cloudfoundry/go-fetcher/config"
 	"github.com/cloudfoundry/go-fetcher/handlers"
@@ -21,28 +21,33 @@ var _ = Describe("Handler", func() {
 		handler       *handlers.Handler
 		req           *http.Request
 		res           *httptest.ResponseRecorder
-		logger        *lagertest.TestLogger
+		ginkgoLogger  *slog.Logger
 		locationCache *cache.LocationCache
 		cfg           config.Config
 	)
 
 	BeforeEach(func() {
 		cfg = config.Config{
-			LogLevel:         "info",
-			OrgList:          []string{"org1", "org2"},
+			GithubAPI:        "https://example.com",
+			GithubAPIKey:     "fake-github-api-key",
 			ImportPrefix:     "import-prefix",
 			NoRedirectAgents: []string{"NoRedirect"},
-			Overrides:        map[string]string{"overridden": "https://override.example.com/other-org/overridden"},
-			GithubURL:        "https://example.com",
-			GithubAPIKey:     "fake-github-api-key",
-			IndexPath:        "../public/index.html",
+			OrgList:          []string{"org1", "org2"},
+			Overrides: map[string]config.Override{
+				"overridden": {
+					Repository: "https://override.example.com/other-org/overridden",
+					Path:       "override/path",
+				},
+			},
 		}
 
-		logger = lagertest.NewTestLogger("test")
-		cacheLogger := lagertest.NewTestLogger("cache")
+		ginkgoHandler := slog.NewTextHandler(GinkgoWriter, &slog.HandlerOptions{Level: slog.LevelDebug})
+		ginkgoLogger = slog.New(ginkgoHandler)
+
 		clock := clock.NewClock()
-		locationCache = cache.NewLocationCache(cacheLogger, clock)
-		handler = handlers.NewHandler(logger, cfg, locationCache)
+		locationCache = cache.NewLocationCache(ginkgoLogger, clock)
+
+		handler = handlers.NewHandler(ginkgoLogger, cfg, locationCache)
 	})
 
 	Describe("Index", func() {
@@ -52,7 +57,7 @@ var _ = Describe("Handler", func() {
 			res = httptest.NewRecorder()
 			handler.GetMeta(res, req)
 			var readErr error
-			indexHtml, readErr = os.ReadFile(cfg.IndexPath)
+			indexHtml, readErr = os.ReadFile("index.html")
 			Expect(readErr).NotTo(HaveOccurred())
 		})
 
@@ -92,7 +97,7 @@ var _ = Describe("Handler", func() {
 		Context("when the repo exists", func() {
 			BeforeEach(func() {
 				var err error
-				locationCache.Add("repo1", fmt.Sprintf("%s/org1/repo1", cfg.GithubURL))
+				locationCache.Add("repo1", fmt.Sprintf("%s/org1/repo1", cfg.GithubAPI))
 				req, err = http.NewRequest("GET", "/repo1", nil)
 				Expect(err).NotTo(HaveOccurred())
 			})
@@ -101,7 +106,7 @@ var _ = Describe("Handler", func() {
 				Expect(res.Code).To(Equal(http.StatusFound))
 
 				headers := res.Header()
-				Expect(headers.Get("Location")).To(Equal(fmt.Sprintf("%s/org1/repo1", cfg.GithubURL)))
+				Expect(headers.Get("Location")).To(Equal(fmt.Sprintf("%s/org1/repo1", cfg.GithubAPI)))
 			})
 
 			Context("when the user agent is in the NoRedirectAgents list", func() {
@@ -113,8 +118,8 @@ var _ = Describe("Handler", func() {
 					Expect(res.Code).To(Equal(http.StatusOK))
 
 					resBody := res.Body.String()
-					Expect(resBody).To(ContainSubstring(fmt.Sprintf("<meta name=\"go-import\" content=\"import-prefix/repo1 git %s/org1/repo1\">", cfg.GithubURL)))
-					Expect(resBody).To(ContainSubstring(fmt.Sprintf("<meta name=\"go-source\" content=\"import-prefix/repo1 _ %s/org1/repo1\">", cfg.GithubURL)))
+					Expect(resBody).To(ContainSubstring(fmt.Sprintf(`<meta name="go-import" content="import-prefix/repo1 git %s/org1/repo1">`, cfg.GithubAPI)))
+					Expect(resBody).To(ContainSubstring(fmt.Sprintf(`<meta name="go-source" content="import-prefix/repo1 _ %s/org1/repo1">`, cfg.GithubAPI)))
 				})
 			})
 
@@ -129,13 +134,13 @@ var _ = Describe("Handler", func() {
 					Expect(res.Code).To(Equal(http.StatusOK))
 
 					resBody := res.Body.String()
-					Expect(resBody).To(ContainSubstring(fmt.Sprintf("<meta name=\"go-import\" content=\"import-prefix/repo1 git %s/org1/repo1\">", cfg.GithubURL)))
-					Expect(resBody).To(ContainSubstring(fmt.Sprintf("<meta name=\"go-source\" content=\"import-prefix/repo1 _ %s/org1/repo1\">", cfg.GithubURL)))
+					Expect(resBody).To(ContainSubstring(fmt.Sprintf(`<meta name="go-import" content="import-prefix/repo1 git %s/org1/repo1">`, cfg.GithubAPI)))
+					Expect(resBody).To(ContainSubstring(fmt.Sprintf(`<meta name="go-source" content="import-prefix/repo1 _ %s/org1/repo1">`, cfg.GithubAPI)))
 				})
 
 				It("also includes a browser redirect to pkg.go.dev", func() {
 					resBody := res.Body.String()
-					Expect(resBody).To(ContainSubstring("<meta http-equiv=\"refresh\" content=\"0; url=https://pkg.go.dev/import-prefix/repo1\">"))
+					Expect(resBody).To(ContainSubstring(`<meta http-equiv="refresh" content="0; url=https://pkg.go.dev/import-prefix/repo1">`))
 				})
 
 				Context("when the user agent is in the NoRedirectAgents list", func() {
@@ -147,9 +152,9 @@ var _ = Describe("Handler", func() {
 						Expect(res.Code).To(Equal(http.StatusOK))
 
 						resBody := res.Body.String()
-						Expect(resBody).To(ContainSubstring(fmt.Sprintf("<meta name=\"go-import\" content=\"import-prefix/repo1 git %s/org1/repo1\">", cfg.GithubURL)))
-						Expect(resBody).To(ContainSubstring(fmt.Sprintf("<meta name=\"go-source\" content=\"import-prefix/repo1 _ %s/org1/repo1\">", cfg.GithubURL)))
-						Expect(resBody).NotTo(ContainSubstring("http-equiv=\"refresh\""))
+						Expect(resBody).To(ContainSubstring(fmt.Sprintf(`<meta name="go-import" content="import-prefix/repo1 git %s/org1/repo1">`, cfg.GithubAPI)))
+						Expect(resBody).To(ContainSubstring(fmt.Sprintf(`<meta name="go-source" content="import-prefix/repo1 _ %s/org1/repo1">`, cfg.GithubAPI)))
+						Expect(resBody).NotTo(ContainSubstring(`http-equiv="refresh"`))
 					})
 				})
 			})
@@ -158,11 +163,9 @@ var _ = Describe("Handler", func() {
 		Context("when the repo has a configured module subdirectory", func() {
 			BeforeEach(func() {
 				var err error
-				cfg.Subdirs = map[string]string{"repo1": "src/repo1"}
-				handler = handlers.NewHandler(logger, cfg, locationCache)
+				handler = handlers.NewHandler(ginkgoLogger, cfg, locationCache)
 
-				locationCache.Add("repo1", fmt.Sprintf("%s/org1/repo1", cfg.GithubURL))
-				req, err = http.NewRequest("GET", "/repo1", nil)
+				req, err = http.NewRequest("GET", "/overridden", nil)
 				Expect(err).NotTo(HaveOccurred())
 				req.Header.Add("User-Agent", "NoRedirect")
 			})
@@ -172,15 +175,15 @@ var _ = Describe("Handler", func() {
 
 				resBody := res.Body.String()
 				Expect(resBody).To(ContainSubstring(fmt.Sprintf(
-					"<meta name=\"go-import\" content=\"import-prefix/repo1 git %s/org1/repo1 src/repo1\">",
-					cfg.GithubURL)))
+					`<meta name="go-import" content="import-prefix/overridden git %s %s">`,
+					cfg.Overrides["overridden"].Repository, cfg.Overrides["overridden"].Path)))
 			})
 		})
 
 		Context("when the request includes a subpackage", func() {
 			BeforeEach(func() {
 				var err error
-				locationCache.Add("repo1", fmt.Sprintf("%s/org1/repo1", cfg.GithubURL))
+				locationCache.Add("repo1", fmt.Sprintf("%s/org1/repo1", cfg.GithubAPI))
 				req, err = http.NewRequest("GET", "/repo1/subpackage", nil)
 				Expect(err).NotTo(HaveOccurred())
 			})
@@ -189,7 +192,7 @@ var _ = Describe("Handler", func() {
 				Expect(res.Code).To(Equal(http.StatusFound))
 
 				headers := res.Header()
-				Expect(headers.Get("Location")).To(Equal(fmt.Sprintf("%s/org1/repo1", cfg.GithubURL)))
+				Expect(headers.Get("Location")).To(Equal(fmt.Sprintf("%s/org1/repo1", cfg.GithubAPI)))
 			})
 		})
 

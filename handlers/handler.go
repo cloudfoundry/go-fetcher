@@ -1,25 +1,31 @@
 package handlers
 
 import (
+	"embed"
+	_ "embed"
 	"fmt"
 	"html"
+	"io"
+	"log/slog"
 	"net/http"
-	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
-	"code.cloudfoundry.org/lager/v3"
 	"github.com/cloudfoundry/go-fetcher/cache"
 	"github.com/cloudfoundry/go-fetcher/config"
 )
 
+//go:embed index.html
+var embeddedFiles embed.FS
+
 type Handler struct {
 	config        config.Config
-	logger        lager.Logger
+	logger        *slog.Logger
 	locationCache *cache.LocationCache
 }
 
-func NewHandler(logger lager.Logger, config config.Config, locationCache *cache.LocationCache) *Handler {
+func NewHandler(logger *slog.Logger, config config.Config, locationCache *cache.LocationCache) *Handler {
 	return &Handler{
 		config:        config,
 		logger:        logger,
@@ -31,73 +37,67 @@ func (h *Handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 	start := time.Now()
 
 	repoName := strings.Split(request.URL.Path, "/")[1]
-	logger := h.logger.Session("handler.getmeta", lager.Data{"repo-name": repoName})
+	logger := h.logger.With("action", "handler.getmeta", "repo-name", repoName)
 
 	writer.Header().Set("Content-Type", "text/html; charset=utf-8")
 
 	// Handle index requests (/, /index.htm, index.html)
-	for _, path := range []string{"/", "/index.htm", "/index.html"} {
-		if request.URL.Path == path {
-			logger.Debug("index-page", lager.Data{"location": request.URL.Path})
-			indexHtmlPath, err := filepath.Abs(h.config.IndexPath)
+	if slices.Contains([]string{"/", "/index.htm", "/index.html"}, request.URL.Path) {
+		logger.Debug("index-page", "location", request.URL.Path)
 
-			if err != nil {
-				logger.Error("index-page", fmt.Errorf("could not get absolute path of IndexPath"))
-			}
-			http.ServeFile(writer, request, indexHtmlPath)
-			return
-		}
+		serveIndex(writer, request)
+		return
 	}
 
 	location := ""
-	for k := range h.config.Overrides {
-		if k == repoName {
-			location = h.config.Overrides[k]
-			logger.Debug("override", lager.Data{"location": location})
-		}
+
+	repoOverride, overrideExists := h.config.Overrides[repoName]
+	if overrideExists {
+		location = repoOverride.Repository
+		logger.Debug("override", "location", location)
 	}
 
 	if location == "" {
 		if loc, ok := h.locationCache.Lookup(repoName); ok {
 			location = loc
-			logger.Debug("cache-hit", lager.Data{"location": location})
+			logger.Debug("cache-hit", "location", location)
 		}
 	}
 
 	if location == "" {
-		logger.Error("not-found", fmt.Errorf("repo not in cache or override list"))
+		logger.Error("not-found", "error", fmt.Errorf("repo not in cache or override list"))
 		http.Error(writer, "", http.StatusNotFound)
 		return
 	}
 
 	defer func() {
-		logger.Info("served", lager.Data{"duration": fmt.Sprint(time.Since(start)), "location": location})
+		logger.Info("served", "duration", fmt.Sprint(time.Since(start)), "location", location)
 	}()
 
 	repoPath := strings.TrimLeft(request.URL.Path, "/")
 
 	if request.URL.Query().Get("go-get") == "1" {
 		// Always emit go-import and go-source meta tags so `go get` can resolve the import path.
-		goImportContent := fmt.Sprintf("%s git %s", h.config.ImportPrefix+"/"+repoName, location)
-		goImport := fmt.Sprintf("<meta name=\"go-import\" content=\"%s\">", html.EscapeString(goImportContent))
-		logger.Debug("meta.go-import", lager.Data{"content": goImportContent})
+		goImportContent := fmt.Sprintf("%s/%s git %s", h.config.ImportPrefix, repoName, location)
+		goImport := fmt.Sprintf(`<meta name="go-import" content="%s">`, html.EscapeString(goImportContent))
+		logger.Debug("meta.go-import", "content", goImportContent)
 		fmt.Fprint(writer, goImport) //nolint:errcheck,staticcheck,govet
 
-		goSourceContent := fmt.Sprintf("%s _ %s", h.config.ImportPrefix+"/"+repoName, location)
-		goSource := fmt.Sprintf("<meta name=\"go-source\" content=\"%s\">", html.EscapeString(goSourceContent))
-		logger.Debug("meta.go-source", lager.Data{"content": goSourceContent})
+		goSourceContent := fmt.Sprintf("%s/%s _ %s", h.config.ImportPrefix, repoName, location)
+		goSource := fmt.Sprintf(`<meta name="go-source" content="%s">`, html.EscapeString(goSourceContent))
+		logger.Debug("meta.go-source", "content", goSourceContent)
 		fmt.Fprint(writer, goSource) //nolint:errcheck,staticcheck,govet
 
 		// Also add a browser redirect to pkg.go.dev for human visitors.
-		if !contains(h.config.NoRedirectAgents, request.Header.Get("User-Agent")) {
-			logger.Debug("redirect.meta", lager.Data{"path": repoPath})
+		if !slices.Contains(h.config.NoRedirectAgents, request.Header.Get("User-Agent")) {
+			logger.Debug("redirect.meta", "path", repoPath)
 			if _, err := fmt.Fprintf(writer,
-				"<meta http-equiv=\"refresh\" content=\"0; url=https://pkg.go.dev/%s/%s\">",
+				`<meta http-equiv="refresh" content="0; url=https://pkg.go.dev/%s/%s">`,
 				html.EscapeString(h.config.ImportPrefix), html.EscapeString(repoPath)); err != nil {
-				logger.Error("redirect.meta", err)
+				logger.Error("redirect.meta", "error", err)
 			}
 		} else {
-			logger.Debug("redirect.http", lager.Data{"location": location})
+			logger.Debug("redirect.http", "location", location)
 			http.Redirect(writer, request, location, http.StatusFound)
 		}
 
@@ -105,8 +105,8 @@ func (h *Handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	// do not redirect if the agent is known from the NoRedirect list
-	if !contains(h.config.NoRedirectAgents, request.Header.Get("User-Agent")) {
-		logger.Debug("redirect.http", lager.Data{"location": location})
+	if !slices.Contains(h.config.NoRedirectAgents, request.Header.Get("User-Agent")) {
+		logger.Debug("redirect.http", "location", location)
 		http.Redirect(writer, request, location, http.StatusFound)
 		return
 	}
@@ -114,28 +114,36 @@ func (h *Handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 	goImportContent := fmt.Sprintf("%s git %s", h.config.ImportPrefix+"/"+repoName, location)
 	// Go 1.25+ recognizes an optional fourth field naming the subdirectory that
 	// holds the module's go.mod, allowing a module to live below the repo root.
-	if subdir := h.config.Subdirs[repoName]; subdir != "" {
-		goImportContent = fmt.Sprintf("%s %s", goImportContent, subdir)
+	if repoOverride.Path != "" {
+		goImportContent = fmt.Sprintf("%s %s", goImportContent, repoOverride.Path)
 	}
-	goImport := fmt.Sprintf("<meta name=\"go-import\" content=\"%s\">", html.EscapeString(goImportContent))
-	logger.Debug("meta.go-import", lager.Data{"content": goImportContent})
+	goImport := fmt.Sprintf(`<meta name="go-import" content="%s">`, html.EscapeString(goImportContent))
+	logger.Debug("meta.go-import", "content", goImportContent)
 	if _, err := fmt.Fprint(writer, goImport); err != nil {
-		logger.Error("meta.go-import", err)
+		logger.Error("meta.go-import", "error", err)
 	}
 
 	goSourceContent := fmt.Sprintf("%s _ %s", h.config.ImportPrefix+"/"+repoName, location)
-	goSource := fmt.Sprintf("<meta name=\"go-source\" content=\"%s\">", html.EscapeString(goSourceContent))
-	logger.Debug("meta.go-source", lager.Data{"content": goSourceContent})
+	goSource := fmt.Sprintf(`<meta name="go-source" content="%s">`, html.EscapeString(goSourceContent))
+	logger.Debug("meta.go-source", "content", goSourceContent)
 	if _, err := fmt.Fprint(writer, goSource); err != nil {
-		logger.Error("meta.go-source", err)
+		logger.Error("meta.go-source", "error", err)
 	}
 }
 
-func contains(slice []string, object string) bool {
-	for _, a := range slice {
-		if strings.Contains(object, a) {
-			return true
-		}
+func serveIndex(writer http.ResponseWriter, request *http.Request) {
+	file, err := embeddedFiles.Open("index.html")
+	if err != nil {
+		http.Error(writer, "File not found", http.StatusNotFound)
+		return
 	}
-	return false
+	defer file.Close() //nolint:errcheck
+
+	stat, err := file.Stat()
+	if err != nil {
+		http.Error(writer, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	http.ServeContent(writer, request, stat.Name(), stat.ModTime(), file.(io.ReadSeeker))
 }

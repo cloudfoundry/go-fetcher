@@ -4,8 +4,6 @@ go 1.25.0
 
 require (
 	code.cloudfoundry.org/clock v1.82.0
-	code.cloudfoundry.org/lager v2.0.0+incompatible
-	code.cloudfoundry.org/lager/v3 v3.80.0
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/onsi/ginkgo/v2 v2.32.0
 	github.com/onsi/gomega v1.42.1
@@ -23,7 +21,6 @@ require (
 	github.com/google/pprof v0.0.0-20260802141513-ef3492d7dac3 // indirect
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.12.2 // indirect
 	github.com/nxadm/tail v1.4.11 // indirect
-	github.com/openzipkin/zipkin-go v0.4.3 // indirect
 	github.com/stretchr/testify v1.9.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/mod v0.38.0 // indirect

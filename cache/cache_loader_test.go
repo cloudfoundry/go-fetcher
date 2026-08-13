@@ -3,6 +3,7 @@ package cache_test
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -10,7 +11,6 @@ import (
 
 	"code.cloudfoundry.org/clock"
 	"code.cloudfoundry.org/clock/fakeclock"
-	"code.cloudfoundry.org/lager/v3/lagertest"
 	"github.com/google/go-github/github"
 	"github.com/tedsuo/ifrit"
 
@@ -29,9 +29,9 @@ var _ = Describe("CacheLoader", func() {
 	BeforeEach(func() {
 		fakeRepoService = &cachefakes.FakeRepositoriesService{}
 		fakeClock = fakeclock.NewFakeClock(time.Now())
-		cacheLogger := lagertest.NewTestLogger("cache")
+		cacheLogger := slog.New(slog.DiscardHandler)
 		locCache = cache.NewLocationCache(cacheLogger, clock.NewClock())
-		logger := lagertest.NewTestLogger("cache-loader")
+		logger := slog.New(slog.DiscardHandler)
 		cacheLoader = cache.NewCacheLoader(logger, []string{"org1", "org2"}, locCache, fakeRepoService, fakeClock)
 		fakeRepoService.ListByOrgReturns(nil, &github.Response{}, nil)
 	})

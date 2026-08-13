@@ -3,6 +3,7 @@ package util_test
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -10,89 +11,158 @@ import (
 	"github.com/cloudfoundry/go-fetcher/util"
 )
 
-// NOTE: os.Setenv/os.Unsetenv errors are intentionally ignored in these tests;
-// this is removed once the suite moves to Ginkgo v2's GinkgoT().Setenv helper.
-//
-//nolint:errcheck
 var _ = Describe("Generate Application Templates", func() {
-
-	var (
-		err                                      error
-		manifestTemplateFile, manifestTargetFile string
-		configTemplateFile, configTargetFile     string
-	)
-
-	AfterEach(func() {
-		err = os.Remove(manifestTargetFile)
-		Expect(err).NotTo(HaveOccurred())
-		err = os.Remove(configTargetFile)
-		Expect(err).NotTo(HaveOccurred())
-
-		os.Unsetenv("APP_NAME")
-		os.Unsetenv("DOMAIN")
-		os.Unsetenv("SERVICES")
-		os.Unsetenv("GITHUB_APIKEY")
-		os.Unsetenv("INSTANCES")
-		os.Unsetenv("MEMORY")
-		os.Unsetenv("DISK_QUOTA")
-	})
+	var testDir string
+	var manifestTargetFile string
+	var configTargetFile string
 
 	BeforeEach(func() {
-		os.Setenv("APP_NAME", "code-acceptance")
-		os.Setenv("DOMAIN", "cfapps.io")
-		os.Setenv("SERVICES", "code-acceptance-papertrail")
-		os.Setenv("GITHUB_APIKEY", "some-key-key")
-		os.Setenv("INSTANCES", "1")
-		os.Setenv("MEMORY", "512M")
-		os.Setenv("DISK_QUOTA", "512M")
-
-		manifestTemplateFile = "manifest.yml.template"
-		manifestTargetFile = fmt.Sprintf("manifest-%d.yml", GinkgoParallelProcess())
-		err = util.GenerateManifest(manifestTemplateFile, manifestTargetFile)
-		Expect(err).NotTo(HaveOccurred())
-
-		configTemplateFile = "config.json.template"
-		configTargetFile = fmt.Sprintf("config-%d.json", GinkgoParallelProcess())
-		err = util.GenerateConfig(configTemplateFile, configTargetFile)
-		Expect(err).NotTo(HaveOccurred())
+		testDir = GinkgoT().TempDir()
 	})
 
-	Context("When the environment variables are present", func() {
-		It("should generate the application manifest", func() {
-			Expect(manifestTargetFile).To(BeAnExistingFile())
-
-			var content []byte
-			content, err = os.ReadFile(manifestTargetFile)
-			Expect(string(content)).To(ContainSubstring("code-acceptance\n"))
+	Context("with environment overrides", func() {
+		BeforeEach(func() {
+			GinkgoT().Setenv("APP_NAME", "golang-redirector")
+			GinkgoT().Setenv("DOMAIN", "example.com")
 		})
 
-		It("should generate the json configuration", func() {
-			Expect(configTargetFile).To(BeAnExistingFile())
+		Describe("manifest generation", func() {
+			BeforeEach(func() {
+				GinkgoT().Setenv("INSTANCES", "10")
+				GinkgoT().Setenv("MEMORY", "20M")
+				GinkgoT().Setenv("DISK_QUOTA", "30M")
 
-			var content []byte
-			content, err = os.ReadFile(configTargetFile)
-			Expect(string(content)).To(ContainSubstring("code-acceptance.cfapps.io"))
+				manifestTargetFile = filepath.Join(testDir, fmt.Sprintf("manifest-%d.yml", GinkgoParallelProcess()))
+				Expect(util.GenerateManifest(manifestTargetFile)).To(Succeed())
+			})
+
+			It("should generate the application manifest", func() {
+				Expect(manifestTargetFile).To(BeAnExistingFile())
+
+				content, err := os.ReadFile(manifestTargetFile)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(string(content)).To(MatchYAML(`---
+applications:
+  - name: golang-redirector
+    memory: 20M
+    instances: 10
+    disk_quota: 30M
+    routes:
+    - route: golang-redirector.example.com
+    env:
+      CONFIG: config.json
+`))
+			})
+		})
+
+		Describe("config generation", func() {
+			BeforeEach(func() {
+				GinkgoT().Setenv("GITHUB_API", "FAKE_GIT_HUB_API")
+				GinkgoT().Setenv("GITHUB_APIKEY", "FAKE_GIT_HUB_API_KEY")
+				GinkgoT().Setenv("LOG_LEVEL", "FAKE_LOG_LEVEL")
+
+				configTargetFile = filepath.Join(testDir, fmt.Sprintf("config-%d.json", GinkgoParallelProcess()))
+				Expect(util.GenerateConfig(configTargetFile)).To(Succeed())
+			})
+
+			It("should generate the json configuration", func() {
+				Expect(configTargetFile).To(BeAnExistingFile())
+
+				content, err := os.ReadFile(configTargetFile)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(string(content)).To(MatchJSON(`{
+  "GithubAPI": "FAKE_GIT_HUB_API",
+  "GithubAPIKey": "FAKE_GIT_HUB_API_KEY",
+  "ImportPrefix": "golang-redirector.example.com",
+  "LogLevel": "FAKE_LOG_LEVEL",
+  "NoRedirectAgents": [
+    "Go-http-client",
+    "GoDocBot"
+  ],
+  "OrgList": [
+    "cloudfoundry",
+    "cloudfoundry-incubator",
+    "cloudfoundry-attic"
+  ],
+  "Overrides": {
+    "config-server": {
+      "Repository": "https://github.com/cloudfoundry/config-server-release",
+      "Path": "src/config-server"
+    },
+    "stager": {
+      "Repository": "https://github.com/cloudfoundry-incubator/stager"
+    }
+  }
+}
+`))
+
+			})
 		})
 	})
 
-	Context("When environment variables are missing", func() {
+	Context("without environment overrides", func() {
+		Describe("manifest generation", func() {
+			BeforeEach(func() {
+				manifestTargetFile = filepath.Join(testDir, fmt.Sprintf("manifest-%d.yml", GinkgoParallelProcess()))
+				Expect(util.GenerateManifest(manifestTargetFile)).To(Succeed())
+			})
 
-		JustBeforeEach(func() {
-			os.Unsetenv("APP_NAME")
-			os.Unsetenv("DOMAIN")
-			os.Unsetenv("INSTANCES")
-			os.Unsetenv("MEMORY")
-			os.Unsetenv("DISK_QUOTA")
+			It("should generate the application manifest", func() {
+				Expect(manifestTargetFile).To(BeAnExistingFile())
+
+				content, err := os.ReadFile(manifestTargetFile)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(string(content)).To(MatchYAML(`---
+applications:
+  - name: code
+    memory: 128M
+    instances: 2
+    disk_quota: 128M
+    routes:
+    - route: code.cloudfoundry.org
+    env:
+      CONFIG: config.json
+`))
+			})
 		})
 
-		It("should generate the application manifest", func() {
-			err = util.GenerateManifest(manifestTemplateFile, manifestTargetFile)
-			Expect(err).To(HaveOccurred())
-		})
+		Describe("config generation", func() {
+			BeforeEach(func() {
+				configTargetFile = filepath.Join(testDir, fmt.Sprintf("config-%d.json", GinkgoParallelProcess()))
+				Expect(util.GenerateConfig(configTargetFile)).To(Succeed())
+			})
 
-		It("should generate the application manifest", func() {
-			err = util.GenerateConfig(configTemplateFile, configTargetFile)
-			Expect(err).To(HaveOccurred())
+			It("should generate the application manifest", func() {
+				Expect(configTargetFile).To(BeAnExistingFile())
+
+				content, err := os.ReadFile(configTargetFile)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(string(content)).To(MatchJSON(`{
+  "GithubAPI": "https://api.github.com/",
+  "GithubAPIKey": "",
+  "ImportPrefix": "code.cloudfoundry.org",
+  "LogLevel": "info",
+  "NoRedirectAgents": [
+    "Go-http-client",
+    "GoDocBot"
+  ],
+  "OrgList": [
+    "cloudfoundry",
+    "cloudfoundry-incubator",
+    "cloudfoundry-attic"
+  ],
+  "Overrides": {
+    "config-server": {
+      "Repository": "https://github.com/cloudfoundry/config-server-release",
+      "Path": "src/config-server"
+    },
+    "stager": {
+      "Repository": "https://github.com/cloudfoundry-incubator/stager"
+    }
+  }
+}
+`))
+			})
 		})
 	})
 })
