@@ -26,6 +26,9 @@ import (
 	"code.cloudfoundry.org/clock"
 )
 
+const defaultConfigFile = "config.json"
+const defaultPort = "8080"
+
 var generateConfig = flag.Bool(
 	"generateConfig",
 	false,
@@ -42,8 +45,13 @@ func main() {
 	logHandler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: programLevel})
 	logger := slog.New(logHandler).With("component", "go-fetcher")
 
+	configFile := os.Getenv("CONFIG")
+	if configFile == "" {
+		logger.Warn("config.file", "message", "$CONFIG was empty falling back to 'config.json'")
+		configFile = defaultConfigFile
+	}
+
 	if *generateConfig {
-		configFile := "config.json"
 		err := util.GenerateConfig(configFile)
 		if err != nil {
 			log.Fatal(err)
@@ -55,12 +63,6 @@ func main() {
 			log.Fatal(err)
 		}
 		return
-	}
-
-	configFile := os.Getenv("CONFIG")
-	if configFile == "" {
-		logger.Warn("config.file", "message", "$CONFIG was empty falling back to 'config.json'")
-		configFile = "config.json"
 	}
 
 	cfg, err := config.Parse(configFile)
@@ -77,7 +79,7 @@ func main() {
 	port := os.Getenv("PORT")
 	if port == "" {
 		logger.Warn("server.port", "message", "$PORT was empty falling back to '8080'")
-		port = "8080"
+		port = defaultPort
 	}
 
 	clck := clock.NewClock()
