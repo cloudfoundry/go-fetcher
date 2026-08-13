@@ -13,6 +13,9 @@ const defaultMemory = "128M"
 const defaultDiskQuota = "128M"
 const defaultInstanceCount = "2"
 
+const defaultGithubAPI = "https://api.github.com/"
+const defaultLogLevel = "info"
+
 //go:embed config.json.template
 var configTemplate string
 
@@ -47,9 +50,12 @@ func GenerateConfig(targetPath string) error {
 	domain := getEnvOrDefault("DOMAIN", defaultDomain)
 	appDomainName := fmt.Sprintf("%s.%s", appName, domain)
 
+	logLevel := getEnvOrDefault("LOG_LEVEL", defaultLogLevel)
+
+	githubAPI := getEnvOrDefault("GITHUB_API", defaultGithubAPI)
 	githubAPIKey := os.Getenv("GITHUB_APIKEY")
 
-	return generateActual(t, targetPath, map[string]any{"appDomainName": appDomainName, "githubAPIKey": githubAPIKey})
+	return generateActual(t, targetPath, map[string]any{"logLevel": logLevel, "appDomainName": appDomainName, "githubAPI": githubAPI, "githubAPIKey": githubAPIKey})
 }
 
 func generateActual(template *template.Template, templatePath string, mappers any) error {

@@ -73,7 +73,7 @@ var _ = Describe("Import Path Redirect Service", func() {
 		conf = &config.Config{
 			LogLevel:         "debug",
 			ImportPrefix:     "the.canonical.import.path",
-			GithubURL:        fakeGithubServer.URL(),
+			GithubAPI:        fakeGithubServer.URL(),
 			OrgList:          []string{"cloudfoundry", "cloudfoundry-incubator", "cloudfoundry-attic"},
 			NoRedirectAgents: []string{"some-agent", "some-other-agent"},
 		}

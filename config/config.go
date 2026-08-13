@@ -15,15 +15,13 @@ const (
 )
 
 type Config struct {
-	LogLevel             string
-	ImportPrefix         string
-	OrgList              []string
-	NoRedirectAgents     []string
-	Overrides            map[string]Override
-	GithubAPIKey         string
-	GithubStatusEndpoint string
-	GithubURL            string
-	IndexPath            string
+	GithubAPI        string
+	GithubAPIKey     string
+	ImportPrefix     string
+	LogLevel         string
+	OrgList          []string
+	NoRedirectAgents []string
+	Overrides        map[string]Override
 }
 
 type Override struct {

@@ -41,7 +41,7 @@ var _ = Describe("Generate Application Templates", func() {
 
 				content, err := os.ReadFile(manifestTargetFile)
 				Expect(err).NotTo(HaveOccurred())
-				Expect(string(content)).To(Equal(`---
+				Expect(string(content)).To(MatchYAML(`---
 applications:
   - name: golang-redirector
     memory: 20M
@@ -57,7 +57,9 @@ applications:
 
 		Describe("config generation", func() {
 			BeforeEach(func() {
+				GinkgoT().Setenv("GITHUB_API", "FAKE_GIT_HUB_API")
 				GinkgoT().Setenv("GITHUB_APIKEY", "FAKE_GIT_HUB_API_KEY")
+				GinkgoT().Setenv("LOG_LEVEL", "FAKE_LOG_LEVEL")
 
 				configTargetFile = filepath.Join(testDir, fmt.Sprintf("config-%d.json", GinkgoParallelProcess()))
 				Expect(util.GenerateConfig(configTargetFile)).To(Succeed())
@@ -68,17 +70,19 @@ applications:
 
 				content, err := os.ReadFile(configTargetFile)
 				Expect(err).NotTo(HaveOccurred())
-				Expect(string(content)).To(Equal(`{
-  "LogLevel": "info",
+				Expect(string(content)).To(MatchJSON(`{
+  "GithubAPI": "FAKE_GIT_HUB_API",
+  "GithubAPIKey": "FAKE_GIT_HUB_API_KEY",
   "ImportPrefix": "golang-redirector.example.com",
+  "LogLevel": "FAKE_LOG_LEVEL",
+  "NoRedirectAgents": [
+    "Go-http-client",
+    "GoDocBot"
+  ],
   "OrgList": [
     "cloudfoundry",
     "cloudfoundry-incubator",
     "cloudfoundry-attic"
-  ],
-  "NoRedirectAgents": [
-    "Go-http-client",
-    "GoDocBot"
   ],
   "Overrides": {
     "config-server": {
@@ -88,10 +92,7 @@ applications:
     "stager": {
       "Repository": "https://github.com/cloudfoundry-incubator/stager"
     }
-  },
-  "GithubURL": "https://api.github.com",
-  "GithubAPIKey": "FAKE_GIT_HUB_API_KEY",
-  "IndexPath": "public/index.html"
+  }
 }
 `))
 
@@ -111,7 +112,7 @@ applications:
 
 				content, err := os.ReadFile(manifestTargetFile)
 				Expect(err).NotTo(HaveOccurred())
-				Expect(string(content)).To(Equal(`---
+				Expect(string(content)).To(MatchYAML(`---
 applications:
   - name: code
     memory: 128M
@@ -136,17 +137,19 @@ applications:
 
 				content, err := os.ReadFile(configTargetFile)
 				Expect(err).NotTo(HaveOccurred())
-				Expect(string(content)).To(Equal(`{
-  "LogLevel": "info",
+				Expect(string(content)).To(MatchJSON(`{
+  "GithubAPI": "https://api.github.com/",
+  "GithubAPIKey": "",
   "ImportPrefix": "code.cloudfoundry.org",
+  "LogLevel": "info",
+  "NoRedirectAgents": [
+    "Go-http-client",
+    "GoDocBot"
+  ],
   "OrgList": [
     "cloudfoundry",
     "cloudfoundry-incubator",
     "cloudfoundry-attic"
-  ],
-  "NoRedirectAgents": [
-    "Go-http-client",
-    "GoDocBot"
   ],
   "Overrides": {
     "config-server": {
@@ -156,9 +159,7 @@ applications:
     "stager": {
       "Repository": "https://github.com/cloudfoundry-incubator/stager"
     }
-  },
-  "GithubURL": "https://api.github.com",
-  "IndexPath": "public/index.html"
+  }
 }
 `))
 			})

@@ -87,27 +87,14 @@ func main() {
 	handler := handlers.NewHandler(logger, *cfg, locationCache)
 	http.HandleFunc("/", handler.GetMeta)
 
-	var tc *http.Client
-	if cfg.GithubAPIKey != "" {
-		ts := oauth2.StaticTokenSource(
-			&oauth2.Token{AccessToken: cfg.GithubAPIKey},
-		)
-		tc = oauth2.NewClient(context.Background(), ts)
-	}
-
-	client := github.NewClient(tc)
-	githubURL, err := url.Parse(fmt.Sprintf("%s/", strings.TrimSuffix(cfg.GithubURL, "/")))
-	if err != nil {
-		log.Fatal(err)
-	}
-	client.BaseURL = githubURL
+	githubClient := newGithubClient(cfg)
 
 	httpServer := http_server.New(":"+port, http.DefaultServeMux)
 	cacheLoader := cache.NewCacheLoader(
 		logger.With("component", "cache-loader"),
 		cfg.OrgList,
 		locationCache,
-		client.Repositories,
+		githubClient.Repositories,
 		clck,
 	)
 
@@ -129,4 +116,23 @@ func main() {
 	}
 
 	logger.Info("exited")
+}
+
+func newGithubClient(cfg *config.Config) *github.Client {
+	var httpClient *http.Client
+	if cfg.GithubAPIKey != "" {
+		ts := oauth2.StaticTokenSource(
+			&oauth2.Token{AccessToken: cfg.GithubAPIKey},
+		)
+		httpClient = oauth2.NewClient(context.Background(), ts)
+	}
+
+	githubClient := github.NewClient(httpClient)
+	githubURL, err := url.Parse(fmt.Sprintf("%s/", strings.TrimSuffix(cfg.GithubAPI, "/")))
+	if err != nil {
+		log.Fatal(err)
+	}
+	githubClient.BaseURL = githubURL
+
+	return githubClient
 }

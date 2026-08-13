@@ -23,8 +23,7 @@ var _ = Describe("Load Configuration", func() {
 			  "Repository": "https://golang.example.com/test_repo",
 			  "Path": "src/test_repo"
 			}
-		  },
-		  "IndexPath": "some_relative/path"
+		  }
 		}`)
 
 		configFile = filepath.Join(GinkgoT().TempDir(), "config.json")
@@ -45,7 +44,6 @@ var _ = Describe("Load Configuration", func() {
 					Path:       "src/test_repo",
 				},
 			))
-			Expect(parsedConfig.IndexPath).To(Equal("some_relative/path"))
 		})
 	})
 })
