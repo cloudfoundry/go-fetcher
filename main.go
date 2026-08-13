@@ -58,6 +58,11 @@ func main() {
 	}
 
 	configFile := os.Getenv("CONFIG")
+	if configFile == "" {
+		logger.Warn("config.file", "message", "$CONFIG was empty falling back to 'config.json'")
+		configFile = "config.json"
+	}
+
 	cfg, err := config.Parse(configFile)
 	if err != nil {
 		logger.Error("config.parse", "error", fmt.Errorf("unable to parse CONFIG='%s': %w", configFile, err))
@@ -71,7 +76,8 @@ func main() {
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		logger.Error("server.failed", "error", fmt.Errorf("$PORT must be set"))
+		logger.Warn("server.port", "message", "$PORT was empty falling back to '8080'")
+		port = "8080"
 	}
 
 	clck := clock.NewClock()
