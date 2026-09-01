@@ -89,6 +89,10 @@ applications:
       "Repository": "https://github.com/cloudfoundry/config-server-release",
       "Path": "src/config-server"
     },
+    "guardian": {
+      "Repository": "https://github.com/cloudfoundry/garden-runc-release",
+      "Path": "src/code.cloudfoundry.org/guardian"
+    },
     "stager": {
       "Repository": "https://github.com/cloudfoundry-incubator/stager"
     }
@@ -155,6 +159,10 @@ applications:
     "config-server": {
       "Repository": "https://github.com/cloudfoundry/config-server-release",
       "Path": "src/config-server"
+    },
+    "guardian": {
+      "Repository": "https://github.com/cloudfoundry/garden-runc-release",
+      "Path": "src/code.cloudfoundry.org/guardian"
     },
     "stager": {
       "Repository": "https://github.com/cloudfoundry-incubator/stager"
