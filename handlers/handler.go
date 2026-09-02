@@ -79,6 +79,11 @@ func (h *Handler) GetMeta(writer http.ResponseWriter, request *http.Request) {
 	if request.URL.Query().Get("go-get") == "1" {
 		// Always emit go-import and go-source meta tags so `go get` can resolve the import path.
 		goImportContent := fmt.Sprintf("%s/%s git %s", h.config.ImportPrefix, repoName, location)
+		// Go 1.25+ recognizes an optional fourth field naming the subdirectory that
+		// holds the module's go.mod, allowing a module to live below the repo root.
+		if repoOverride.Path != "" {
+			goImportContent = fmt.Sprintf("%s %s", goImportContent, repoOverride.Path)
+		}
 		goImport := fmt.Sprintf(`<meta name="go-import" content="%s">`, html.EscapeString(goImportContent))
 		logger.Debug("meta.go-import", "content", goImportContent)
 		fmt.Fprint(writer, goImport) //nolint:errcheck,staticcheck,govet
