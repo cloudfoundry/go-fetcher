@@ -16,8 +16,8 @@ const (
 
 type Config struct {
 	GithubAPI        string
-	GithubAPIKey     string
-	ImportPrefix     string
+	GithubAPIKey     string `json:"-"` // never load from JSON
+	ImportPrefix     string `json:"-"` // never load from JSON
 	LogLevel         string
 	OrgList          []string
 	NoRedirectAgents []string
