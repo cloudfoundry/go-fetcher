@@ -178,6 +178,23 @@ var _ = Describe("Handler", func() {
 					`<meta name="go-import" content="import-prefix/overridden git %s %s">`,
 					cfg.Overrides["overridden"].Repository, cfg.Overrides["overridden"].Path)))
 			})
+
+			Context("when go-get=1 is in the query string", func() {
+				BeforeEach(func() {
+					var err error
+					req, err = http.NewRequest("GET", "/overridden?go-get=1", nil)
+					Expect(err).NotTo(HaveOccurred())
+				})
+
+				It("includes the subdirectory as the fourth go-import field", func() {
+					Expect(res.Code).To(Equal(http.StatusOK))
+
+					resBody := res.Body.String()
+					Expect(resBody).To(ContainSubstring(fmt.Sprintf(
+						`<meta name="go-import" content="import-prefix/overridden git %s %s">`,
+						cfg.Overrides["overridden"].Repository, cfg.Overrides["overridden"].Path)))
+				})
+			})
 		})
 
 		Context("when the request includes a subpackage", func() {
