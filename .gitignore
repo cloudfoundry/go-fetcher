@@ -1,6 +1,3 @@
 .idea
 
 go-fetcher
-config.json
-config-local.json
-manifest.yml

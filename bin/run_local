@@ -4,7 +4,6 @@ set -euo pipefail
 REPO_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 
 pushd "${REPO_ROOT}"
-  export CONFIG="config-local.json"
-  APP_NAME="127" DOMAIN="0.0.1" go run main.go -generateConfig=true
+  export IMPORT_PREFIX="127.0.0.1"
   go run main.go
 popd

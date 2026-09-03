@@ -1,8 +1,6 @@
 {
-  "GithubAPI": "{{.githubAPI}}",
-  "GithubAPIKey": "{{.githubAPIKey}}",
-  "ImportPrefix": "{{.appDomainName}}",
-  "LogLevel": "{{.logLevel}}",
+  "GithubAPI": "https://api.github.com/",
+  "LogLevel": "info",
   "NoRedirectAgents": [
     "Go-http-client",
     "GoDocBot"

@@ -29,7 +29,6 @@ var _ = Describe("Handler", func() {
 	BeforeEach(func() {
 		cfg = config.Config{
 			GithubAPI:        "https://example.com",
-			GithubAPIKey:     "fake-github-api-key",
 			ImportPrefix:     "import-prefix",
 			NoRedirectAgents: []string{"NoRedirect"},
 			OrgList:          []string{"org1", "org2"},

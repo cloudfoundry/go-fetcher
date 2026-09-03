@@ -1,0 +1,8 @@
+---
+applications:
+  - name: code
+    memory: 128M
+    instances: 2
+    disk_quota: 128M
+    env:
+      GOPACKAGENAME: github.com/cloudfoundry/go-fetcher/cmd/go-fetcher
