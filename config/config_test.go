@@ -10,11 +10,13 @@ import (
 	"github.com/cloudfoundry/go-fetcher/config"
 )
 
-var _ = Describe("Load Configuration", func() {
-	var configFile string
+var _ = Describe("config", func() {
 
-	BeforeEach(func() {
-		jsonContent := []byte(`{
+	Describe("Parse", func() {
+		var configFile string
+
+		BeforeEach(func() {
+			configJson := []byte(`{
 		  "GithubAPI": "https://api.github.com/",
 		  "GithubAPIKey": "secret-github-api-key-should-be-ignored",
 		  "ImportPrefix": "import-prefix-should-come-from-env",
@@ -43,22 +45,21 @@ var _ = Describe("Load Configuration", func() {
 		  }
 		}`)
 
-		configFile = filepath.Join(GinkgoT().TempDir(), "config.json")
+			configFile = filepath.Join(GinkgoT().TempDir(), "config.json")
 
-		Expect(os.WriteFile(configFile, jsonContent, 0644)).To(Succeed())
-	})
+			Expect(os.WriteFile(configFile, configJson, 0644)).To(Succeed())
+		})
 
-	Context("when there is a config file", func() {
 		It("returns the parsed configuration", func() {
-			parsedConfig, err := config.Parse(configFile)
+			cfg, err := config.Parse(configFile)
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(parsedConfig.GithubAPI).To(Equal("https://api.github.com/"))
-			Expect(parsedConfig.GithubAPIKey).To(Equal(""))
-			Expect(parsedConfig.ImportPrefix).To(Equal(""))
-			Expect(parsedConfig.LogLevel).To(Equal("info"))
-			Expect(parsedConfig.NoRedirectAgents).To(Equal([]string{"Go-http-client", "GoDocBot"}))
-			Expect(parsedConfig.OrgList).To(Equal([]string{"cloudfoundry", "cloudfoundry-incubator", "cloudfoundry-attic"}))
+			Expect(cfg.GithubAPI).To(Equal("https://api.github.com/"))
+			Expect(cfg.GithubAPIKey).To(Equal(""))
+			Expect(cfg.ImportPrefix).To(Equal(""))
+			Expect(cfg.LogLevel).To(Equal("info"))
+			Expect(cfg.NoRedirectAgents).To(Equal([]string{"Go-http-client", "GoDocBot"}))
+			Expect(cfg.OrgList).To(Equal([]string{"cloudfoundry", "cloudfoundry-incubator", "cloudfoundry-attic"}))
 
 			expectedOverrides := map[string]config.Override{
 				"config-server": {
@@ -73,7 +74,41 @@ var _ = Describe("Load Configuration", func() {
 					Repository: "https://github.com/cloudfoundry-incubator/stager",
 				},
 			}
-			Expect(parsedConfig.Overrides).To(Equal(expectedOverrides))
+			Expect(cfg.Overrides).To(Equal(expectedOverrides))
+		})
+	})
+
+	Describe("Config.PopulateFromEnv()", func() {
+		var cfg *config.Config
+
+		BeforeEach(func() {
+			cfg = &config.Config{}
+		})
+
+		Context("when NO expected ENV vars are set", func() {
+			It("loads the default values", func() {
+				cfg.PopulateFromEnv()
+
+				Expect(cfg.GithubAPIKey).To(Equal(""))
+				Expect(cfg.ImportPrefix).To(Equal("code.cloudfoundry.org"))
+			})
+		})
+
+		Context("when expected ENV vars are set", func() {
+			var githubApiKey = "secret-github-api-key"
+			var importPrefix = "some.import-prefix.tld"
+
+			BeforeEach(func() {
+				GinkgoT().Setenv("GITHUB_API_KEY", githubApiKey)
+				GinkgoT().Setenv("IMPORT_PREFIX", importPrefix)
+			})
+
+			It("loads the ENV values", func() {
+				cfg.PopulateFromEnv()
+
+				Expect(cfg.GithubAPIKey).To(Equal(githubApiKey))
+				Expect(cfg.ImportPrefix).To(Equal(importPrefix))
+			})
 		})
 	})
 })

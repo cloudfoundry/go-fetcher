@@ -12,6 +12,8 @@ const (
 	INFO  = "info"
 	WARN  = "warn"
 	ERROR = "error"
+
+	defaultImportPrefix = "code.cloudfoundry.org"
 )
 
 type Config struct {
@@ -41,6 +43,14 @@ func (c *Config) GetLogLevel() (slog.Level, error) {
 		return slog.LevelError, nil
 	default:
 		return slog.LevelInfo, fmt.Errorf("unknown log level '%s', falling back to 'slog.LevelInfo'", c.LogLevel)
+	}
+}
+
+func (c *Config) PopulateFromEnv() {
+	c.GithubAPIKey = os.Getenv("GITHUB_API_KEY")
+	c.ImportPrefix = os.Getenv("IMPORT_PREFIX")
+	if c.ImportPrefix == "" {
+		c.ImportPrefix = defaultImportPrefix
 	}
 }
 

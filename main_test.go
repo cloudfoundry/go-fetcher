@@ -1,7 +1,6 @@
 package main_test
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -17,8 +16,6 @@ import (
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
 	"github.com/onsi/gomega/ghttp"
-
-	"github.com/cloudfoundry/go-fetcher/config"
 )
 
 // NOTE: os.Setenv/os.Unsetenv errors are intentionally ignored in these tests;
@@ -29,8 +26,8 @@ var _ = Describe("Import Path Redirect Service", func() {
 	var (
 		port             string
 		importPrefix     = "the.canonical.import.path"
+		someAgent        = "some-agent"
 		session          *gexec.Session
-		conf             *config.Config
 		fakeGithubServer *ghttp.Server
 		httpClient       *http.Client
 	)
@@ -75,17 +72,22 @@ var _ = Describe("Import Path Redirect Service", func() {
 
 			port = strconv.Itoa(8182 + GinkgoParallelProcess())
 
-			conf = &config.Config{
-			GithubAPI:        fakeGithubServer.URL(),
-			LogLevel:         "debug",
-			OrgList:          []string{"cloudfoundry", "cloudfoundry-incubator", "cloudfoundry-attic"},
-			NoRedirectAgents: []string{"some-agent", "some-other-agent"},
-		}
-		bytes, err := json.Marshal(conf)
-		Expect(err).NotTo(HaveOccurred())
+			configJson := []byte(fmt.Sprintf(`{
+		  "GithubAPI":        "%s",
+		  "LogLevel":         "debug",
+		  "OrgList":          [
+			"cloudfoundry",
+			"cloudfoundry-incubator", 
+			"cloudfoundry-attic"
+		  ],
+		  "NoRedirectAgents": [
+			"%s", 
+			"some-other-agent"
+		  ]
+		}`, fakeGithubServer.URL(), someAgent))
 
 			configFile := filepath.Join(GinkgoT().TempDir(), fmt.Sprintf("config-%d.json", GinkgoParallelProcess()))
-			err = os.WriteFile(configFile, bytes, 0644)
+			err := os.WriteFile(configFile, configJson, 0644)
 			Expect(err).NotTo(HaveOccurred())
 
 			GinkgoT().Setenv("CONFIG", configFile)
@@ -109,7 +111,7 @@ var _ = Describe("Import Path Redirect Service", func() {
 				httpClient = &http.Client{}
 				req, err := http.NewRequest("GET", fmt.Sprintf("http://:%s/repository-1/something-else/test", port), nil)
 				Expect(err).NotTo(HaveOccurred())
-				req.Header.Set("User-Agent", conf.NoRedirectAgents[0])
+				req.Header.Set("User-Agent", someAgent)
 
 				res, err := httpClient.Do(req)
 				Expect(err).NotTo(HaveOccurred())

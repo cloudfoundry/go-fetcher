@@ -23,7 +23,6 @@ import (
 )
 
 const defaultConfigFile = "config.json"
-const defaultImportPrefix = "code.cloudfoundry.org"
 const defaultPort = "8080"
 
 func main() {
@@ -50,15 +49,7 @@ func main() {
 	}
 
 	// load data from ENV into config
-	cfg.GithubAPIKey = os.Getenv("GITHUB_API_KEY")
-	if cfg.GithubAPIKey == "" {
-		logger.Info("env.load", "message", "$GITHUB_API_KEY was empty will use unauthenticated client")
-	}
-	cfg.ImportPrefix = os.Getenv("IMPORT_PREFIX")
-	if cfg.ImportPrefix == "" {
-		logger.Info("env.load", "message", fmt.Sprintf("$IMPORT_PREFIX was empty using '%s'", defaultImportPrefix))
-		cfg.ImportPrefix = defaultImportPrefix
-	}
+	cfg.PopulateFromEnv()
 
 	logLevel, err := cfg.GetLogLevel()
 	if err != nil {
